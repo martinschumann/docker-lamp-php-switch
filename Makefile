@@ -35,8 +35,8 @@ build-apache:
 
 build-all-php-fpm:
 	$(call load, \
-		@touch "$(BASH_HISTORY_FILE)"; \
-		@touch "$(GIT_CONFIG_FILE)"; \
+		touch "$(BASH_HISTORY_FILE)"; \
+		touch "$(GIT_CONFIG_FILE)"; \
 		for VERSION in $(VERSIONS); do \
 			echo-info "Start building image for PHP version $$VERSION"; \
 			docker compose down php; \
