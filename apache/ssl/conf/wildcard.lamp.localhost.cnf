@@ -1,0 +1,21 @@
+[req]
+default_bits = 4096
+prompt = no
+default_md = sha256
+x509_extensions = v3_req
+distinguished_name = dn
+
+[dn]
+C  = DE
+ST = Hamburg
+L  = Hamburg
+O  = lamp-php-switch
+OU = IT
+CN = wildcard.lamp.localhost
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = *.lamp.localhost
+DNS.2 = lamp.localhost

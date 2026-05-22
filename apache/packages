@@ -1,0 +1,9 @@
+sudo
+htop
+mariadb-client
+curl
+git
+openssl
+vim
+ca-certificates
+dnsutils

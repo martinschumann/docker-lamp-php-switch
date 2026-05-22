@@ -1,0 +1,12 @@
+bash
+ca-certificates
+composer
+curl
+git
+gosu
+htop
+mariadb-client
+socat
+ssh
+sudo
+vim
