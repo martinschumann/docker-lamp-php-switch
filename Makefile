@@ -12,6 +12,8 @@ include .env
 export
 
 VERSIONS := 8.2 8.3 8.4 8.5
+BASH_HISTORY_FILE := $(CURDIR)/shell/ubuntu/.bash_history
+GIT_CONFIG_FILE := $(CURDIR)/shell/ubuntu/.gitconfig
 
 .PHONY: build build-apache build-all-php-fpm build-single-php-fpm up logs down
 build: down build-apache build-all-php-fpm
@@ -33,6 +35,8 @@ build-apache:
 
 build-all-php-fpm:
 	$(call load, \
+		@touch "$(BASH_HISTORY_FILE)" \
+		@touch "$(GIT_CONFIG_FILE)" \
 		for VERSION in $(VERSIONS); do \
 			echo-info "Start building image for PHP version $$VERSION"; \
 			docker compose down php; \
