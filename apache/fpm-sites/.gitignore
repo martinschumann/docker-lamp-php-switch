@@ -1,0 +1,4 @@
+*
+!.gitignore
+!examplehost.lamp.localhost.conf
+!README.md
