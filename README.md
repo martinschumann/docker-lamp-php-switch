@@ -9,27 +9,27 @@ Data for a virtual host or development site are placed in ```./vhosts```. A corr
 ## How to use
 
 ```
-$ git clone https://github.com/martinschumann/docker-lamp-php-switch
+git clone https://github.com/martinschumann/docker-lamp-php-switch
 ```
 ```
-$ cd docker-lamp-php-switch
+cd docker-lamp-php-switch
 ```
 ```
-$ cp .env-example .env
+cp .env-example .env
 ```
 ```
-$ make build && make up
+make build && make up
 ```
 
 Root-Certificate has to be imported. On MacOS that may be done by:
 ```
-$ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./apache/ssl/certs/lamp.localhost-rootCA.crt
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./apache/ssl/certs/lamp.localhost-rootCA.crt
 ```
 Or by dropping the cert file into Keychain Access and setting it trusted.
 
 Log into the php-fpm container.
 ```
-$ ./shell.sh
+./shell.sh
 ```
 ```
 [ubuntu@php-8.3]:~$ cd /srv/apache2/vhosts/examplehost
