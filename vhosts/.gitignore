@@ -1,0 +1,6 @@
+*
+!.gitignore
+!examplehost/
+!examplehost/public/
+!examplehost/public/index.php
+!examplehost/composer.json
