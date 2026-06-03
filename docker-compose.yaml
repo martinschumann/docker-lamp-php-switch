@@ -56,16 +56,12 @@ services:
         target: /home/ubuntu/.bashrc.d/
         read_only: false
       - type: bind
-        source: ./shell/ubuntu/.bash_history
-        target: /home/ubuntu/.bash_history
+        source: ./shell/ubuntu/files
+        target: /home/ubuntu/.host-data
         read_only: false
       - type: bind
         source: ./shell/ubuntu/.mysql
         target: /home/ubuntu/.mysql
-        read_only: false
-      - type: bind
-        source: ./shell/ubuntu/.gitconfig
-        target: /home/ubuntu/.gitconfig
         read_only: false
       - type: bind
         source: ./shell/ubuntu/.ssh
