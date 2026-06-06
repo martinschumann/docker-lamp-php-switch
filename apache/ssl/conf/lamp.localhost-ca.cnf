@@ -25,7 +25,7 @@ organizationalUnitName  = optional
 commonName = supplied
 emailAddress = optional
 
-[req]
+[ req ]
 default_bits = 4096
 prompt = no
 default_md = sha256
@@ -55,7 +55,7 @@ authorityKeyIdentifier=keyid,issuer
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
 
-[alt_names]
+[ alt_names ]
 DNS.1 = *.lamp.localhost
 DNS.2 = lamp.localhost
 
