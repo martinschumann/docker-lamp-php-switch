@@ -5,6 +5,7 @@ curl
 git
 gosu
 htop
+make
 mariadb-client
 socat
 ssh
