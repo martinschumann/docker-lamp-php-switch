@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu
 
 if [[ ! -f "/opt/pki/private/lamp.localhost-rootCA.key" ]] || [[ "${RENEW_SSL_CERT_ON_BUILD}" ]]; then
     echo "Generating Root-CA certificate"
