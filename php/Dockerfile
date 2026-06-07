@@ -14,7 +14,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install packages from file
 RUN rm -rf /root/packages
 COPY ./php/packages /root/packages
-RUN set -euxo pipefail && \
+RUN set -euo pipefail && \
     apt-get update && \
     xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < /root/packages && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -22,7 +22,7 @@ RUN set -euxo pipefail && \
 # Add repository ppa:ondrej/php
 RUN rm -rf /root/php-packages
 COPY ./php/php-${PHP_VERSION}/php-packages /root/php-packages
-RUN set -euxo pipefail && \
+RUN set -euo pipefail && \
     apt-get update && \
     apt-get install software-properties-common -y --no-install-recommends --no-install-suggests && \
     add-apt-repository ppa:ondrej/php  && \
