@@ -14,11 +14,12 @@ ENV RENEW_SSL_CERT_ON_BUILD=${RENEW_SSL_CERT_ON_BUILD}
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN set -euxo pipefail && \
+RUN set -euo pipefail && \
     apt-get update && \
     apt-get install -y --no-install-recommends --no-install-suggests \
         apache2 \
         openssl \
+        ssl-cert \
         supervisor \
         python3 \
         python3-watchdog
@@ -28,20 +29,21 @@ RUN a2enmod proxy proxy_fcgi setenvif
 
 # Install packages
 COPY ./apache/packages /root/packages
-RUN set -euxo pipefail && \
+RUN set -euo pipefail && \
     apt-get update && \
     xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < /root/packages && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Generate SSL certificate self-signed by self-generated 
+# Create directories for SSL certificate self-signed by self-generated Root-CA
 RUN mkdir -p /opt/pki/certs \
              /opt/pki/crl \
              /opt/pki/csr \
              /opt/pki/private && \
     chmod 700 /opt/pki/private
 
-COPY ./apache/ssl/conf/lamp.localhost-ca.cnf /opt/pki/lamp.localhost-ca.cnf
+COPY ./apache/ssl/conf/CA_lamp.localhost.cnf /opt/pki/CA_lamp.localhost.cnf
 COPY ./apache/ssl/conf/wildcard.lamp.localhost.san.cnf /opt/pki/csr/wildcard.lamp.localhost.san.cnf
+COPY ./apache/ssl/conf/req.cnf /opt/pki/csr/req.cnf
 COPY ./apache/store-certs-on-host.sh /usr/local/bin/store-certs-on-host.sh
 RUN chmod +x /usr/local/bin/store-certs-on-host.sh
 
@@ -52,7 +54,9 @@ RUN echo "IncludeOptional fpm-sites/*.conf" > /etc/apache2/sites-available/inclu
 RUN echo "ServerName $SERVERNAME" > /etc/apache2/conf-available/servername.conf
 RUN a2enconf servername  && \
     a2enmod rewrite  && \
-    a2disconf other-vhosts-access-log
+    a2disconf other-vhosts-access-log && \
+    a2enmod ssl && \
+    a2ensite default-ssl
 
 RUN mkdir -p /var/log/supervisor
 RUN mkdir -p /var/run/apache2
@@ -67,5 +71,5 @@ EXPOSE 80 443
 
 ######
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

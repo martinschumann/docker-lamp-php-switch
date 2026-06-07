@@ -54,8 +54,3 @@ subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
-
-[ alt_names ]
-DNS.1 = *.lamp.localhost
-DNS.2 = lamp.localhost
-
