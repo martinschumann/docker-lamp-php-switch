@@ -33,7 +33,7 @@ services:
         read_only: false
       # Config files editable on the host and monitored by watchmedo
       - type: bind
-        source: ./apache/fpm-sites
+        source: ./vhosts-configs
         target: /etc/apache2/fpm-sites
         read_only: false
 
