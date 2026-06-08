@@ -1,68 +1,45 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
-root_ca_key="/opt/pki/private/lamp.localhost-rootCA.key"
-root_ca_cert="/opt/pki/certs/lamp.localhost-rootCA.crt";
-root_ca_cert_on_host="/etc/ssl/export/lamp.localhost-rootCA.crt"
-ca_conf="/opt/pki/CA_lamp.localhost.cnf"
+root_ca_file="/opt/pki/certs/lamp.localhost-rootCA.crt";
+cert_file="/opt/pki/certs/wildcard.lamp.localhost.crt"
 
-wildcard_key="/opt/pki/private/wildcard.lamp.localhost.key"
-wildcard_cert="/opt/pki/certs/wildcard.lamp.localhost.crt"
-wildcard_cert_conf="/opt/pki/csr/wildcard.lamp.localhost.san.cnf"
-request_conf="/opt/pki/csr/req.cnf"
-signing_req="/opt/pki/csr/wildcard.lamp.localhost.csr"
+root_ca_host_file="/etc/ssl/export/lamp.localhost-rootCA.crt"
+cert_host_file="/etc/ssl/export/wildcard.lamp.localhost.crt"
 
-if [[ ! -f "$root_ca_key" ]] \
-    || [[ ! -f "$root_ca_cert" ]] \
-    || [[ ! -f "$root_ca_cert_on_host" ]] \
-    || [[ "${RENEW_SSL_CERT_ON_BUILD}" -eq 1 ]]; then
-    echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    echo "Generating Root-CA certificate"
-    echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+chained_certificate_host_file="/etc/ssl/export/ca-bundle.pem"
 
-    openssl genrsa -out "$root_ca_key" 4096 && \
-    chmod 600 "$root_ca_key" && \
-    openssl req -config "$ca_conf" \
-                -key "$root_ca_key" \
-                -new -x509 \
-                -days 3650 \
-                -sha256 \
-                -extensions v3_ca \
-                -out "$root_ca_cert" && \
-    cp "$root_ca_cert" /usr/local/share/ca-certificates/ && \
-    update-ca-certificates
+# SSL cert and chained certificate are dependants of Root-CA generation
+# in entrypoint script. Therefore skipping further checks is accepatable.
+if [[ -f "$root_ca_file" ]] \
+    && [[ ! -f "$root_ca_host_file" ]]; then
+        echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        echo "Storing Root-CA certificate on host";
+        cp "$root_ca_file" "$root_ca_host_file";
 
-    echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    echo "Generating SSL certificate for lamp.localhost"
-    echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        echo "Storing SSL certificate on host";
+        cat "$cert_file" > "$cert_host_file";
 
-    openssl genrsa -out "$wildcard_key" 2048 && \
-    openssl req -new \
-                -key "$wildcard_key" \
-                -out "$signing_req" \
-                -config "$request_conf"
-
-                # -subj "/C=DE/ST=Hamburg/L=Hamburg/O=lamp-php-switch/CN=lamp.localhost"
-
-    openssl x509 -req \
-                 -in "$signing_req" \
-                 -CA "$root_ca_cert" \
-                 -CAkey "$root_ca_key" \
-                 -CAcreateserial \
-                 -out "$wildcard_cert" \
-                 -days 825 \
-                 -sha256 \
-                 -extfile "$wildcard_cert_conf"
-
-    /usr/local/bin/store-certs-on-host.sh
+        echo "Storing chained certificate on host";
+        echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        cat "$cert_file" > "$chained_certificate_host_file" && \
+        cat "$root_ca_file" >> "$chained_certificate_host_file"
 fi
 
-if [[ -f "$wildcard_key" ]] \
-    && [[ -f "$wildcard_cert" ]]; then 
-    a2ensite include-fpm-sites && \
-    a2dissite default-ssl && \
-    a2ensite 000-default-ssl
-fi;
+if [[ -f "$root_ca_file" ]] \
+    && [[ -f "$root_ca_host_file" ]] \
+    && ! cmp -s "$root_ca_file" "$root_ca_host_file"; then
+        echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        echo "Updating Root-CA certificate on host";
+        cat "$root_ca_file" > "$root_ca_host_file";
+
+        echo "Updating SSL certificate on host";
+        cat "$cert_file" > "$cert_host_file";
+
+        echo "Updating chained certificate on host";
+        echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        cat "$cert_file" > "$chained_certificate_host_file" && \
+        cat "$root_ca_file" >> "$chained_certificate_host_file"
+fi
 
 exec "$@"

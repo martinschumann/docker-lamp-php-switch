@@ -34,6 +34,14 @@ RUN set -euo pipefail && \
     xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < /root/packages && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Apache default configuration (including SSL)
+RUN echo "ServerName $SERVERNAME" > /etc/apache2/conf-available/servername.conf
+RUN a2enconf servername  && \
+    a2enmod rewrite  && \
+    a2disconf other-vhosts-access-log && \
+    a2enmod ssl && \
+    a2ensite default-ssl
+
 # Create directories for SSL certificate self-signed by self-generated Root-CA
 RUN mkdir -p /opt/pki/certs \
              /opt/pki/crl \
@@ -41,22 +49,21 @@ RUN mkdir -p /opt/pki/certs \
              /opt/pki/private && \
     chmod 700 /opt/pki/private
 
-COPY ./apache/ssl/conf/CA_lamp.localhost.cnf /opt/pki/CA_lamp.localhost.cnf
+# CA, SAN and Req configurations
+COPY ./apache/ssl/conf/CA_lamp.localhost.cnf           /opt/pki/CA_lamp.localhost.cnf
 COPY ./apache/ssl/conf/wildcard.lamp.localhost.san.cnf /opt/pki/csr/wildcard.lamp.localhost.san.cnf
-COPY ./apache/ssl/conf/req.cnf /opt/pki/csr/req.cnf
-COPY ./apache/store-certs-on-host.sh /usr/local/bin/store-certs-on-host.sh
-RUN chmod +x /usr/local/bin/store-certs-on-host.sh
+COPY ./apache/ssl/conf/req.cnf                         /opt/pki/csr/req.cnf
 
+# Apache SSL configuration for selfsigned cert and vhosts proxied to fpm-server
 COPY ./apache/000-default-ssl.conf /etc/apache2/sites-available/000-default-ssl.conf
 COPY ./apache/elements/ssl-common.conf /etc/apache2/elements/ssl-common.conf
+RUN echo "IncludeOptional fpm-sites/*.conf" > /etc/apache2/sites-available/include-fpm-sites.conf && \
+    a2ensite include-fpm-sites
 
-RUN echo "IncludeOptional fpm-sites/*.conf" > /etc/apache2/sites-available/include-fpm-sites.conf
-RUN echo "ServerName $SERVERNAME" > /etc/apache2/conf-available/servername.conf
-RUN a2enconf servername  && \
-    a2enmod rewrite  && \
-    a2disconf other-vhosts-access-log && \
-    a2enmod ssl && \
-    a2ensite default-ssl
+# Generate self-signed cert and use in Apache
+COPY ./apache/generate-certs.sh /usr/local/bin/generate-certs.sh
+RUN chmod +x /usr/local/bin/generate-certs.sh && \
+    /usr/local/bin/generate-certs.sh
 
 RUN mkdir -p /var/log/supervisor
 RUN mkdir -p /var/run/apache2
