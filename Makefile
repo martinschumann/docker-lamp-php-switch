@@ -13,8 +13,8 @@ export
 
 VERSIONS := 8.2 8.3 8.4 8.5
 
-.PHONY: build build-apache build-all-php-fpm build-single-php-fpm up logs down
-build: down build-apache build-all-php-fpm
+.PHONY: build build-apache build-php build-single-php up logs down
+build: down build-apache build-php
 
 build-apache:
 	$(call load, \
@@ -31,7 +31,7 @@ build-apache:
 			-f apache/Dockerfile . ; \
 	)
 
-build-all-php-fpm:
+build-php:
 	$(call load, \
 		for VERSION in $(VERSIONS); do \
 			echo-info "Start building image for PHP version $$VERSION"; \
@@ -48,11 +48,11 @@ build-all-php-fpm:
 		done; \
 	)
 
-build-single-php-fpm:
+build-single-php:
 	$(call load, \
 		if [ "$(origin PHP_VERSION)" != "command line" ]; then \
 			echo-error "Pass PHP_VERSION on command line"; \
-			echo-info "Example: make build-single-php-fpm PHP_VERSION=8.4"; \
+			echo-info "Example: make build-single-php PHP_VERSION=8.4"; \
 			exit 1; \
 		fi; \
 		\
