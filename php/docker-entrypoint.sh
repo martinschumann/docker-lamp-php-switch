@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
 echo "Running entrypoint script $(hostname):$(realpath ${BASH_SOURCE[0]})"
