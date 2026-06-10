@@ -1,7 +1,6 @@
 FROM ubuntu:24.04
 
 ARG SERVERNAME='apache'
-ARG RENEW_SSL_CERT_ON_BUILD
 
 ENV APACHE_RUN_USER=www-data
 ENV APACHE_RUN_GROUP=www-data
@@ -9,7 +8,6 @@ ENV APACHE_LOG_DIR=/var/log/apache2
 ENV APACHE_PID_FILE=/var/run/apache2/apache2.pid
 ENV APACHE_RUN_DIR=/var/run/apache2
 ENV APACHE_LOCK_DIR=/var/lock/apache2
-ENV RENEW_SSL_CERT_ON_BUILD=${RENEW_SSL_CERT_ON_BUILD}
 
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -62,8 +60,6 @@ RUN echo "IncludeOptional fpm-sites/*.conf" > /etc/apache2/sites-available/inclu
 
 # Generate self-signed cert and use in Apache
 COPY ./apache/generate-certs.sh /usr/local/bin/generate-certs.sh
-RUN chmod +x /usr/local/bin/generate-certs.sh && \
-    /usr/local/bin/generate-certs.sh
 
 RUN mkdir -p /var/log/supervisor
 RUN mkdir -p /var/run/apache2
@@ -75,6 +71,11 @@ RUN ln -sf /dev/stdout /var/log/apache2/access.log && \
 COPY ./apache/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 80 443
+
+# Skip cache if renewal wanted
+ARG RENEW_SSL_CERT_ON_BUILD
+RUN chmod +x /usr/local/bin/generate-certs.sh && \
+    if [ ${RENEW_SSL_CERT_ON_BUILD} -gt 0 ]; then /usr/local/bin/generate-certs.sh; fi;
 
 ######
 

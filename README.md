@@ -4,7 +4,7 @@ My personal Docker LAMP container drafted to easily test a website under all cur
 
 The stack serves virtual hosts on the domain ```lamp.localhost```. The PHP version under which a site should be tested, can be chosen in the ```./env``` file.
 
-Data for a virtual host or development site are placed in ```./vhosts```. A corresponding Apache configuration file must be added in ```./apache/fpm-sites```. The configured virtual host will proxy-pass requests for PHP files to a PHP-FPM server that runs under the chosen PHP version.
+Data for a virtual host or development site are placed in ```./vhosts```. The corresponding Apache configuration file must be added in ```./vhosts-configs```. The configured virtual host will proxy-pass requests for PHP files to a PHP-FPM server that runs under the chosen PHP version.
 
 ## How to use
 

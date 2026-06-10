@@ -9,8 +9,8 @@ cert_host_file="/etc/ssl/export/wildcard.lamp.localhost.crt"
 
 chained_certificate_host_file="/etc/ssl/export/ca-bundle.pem"
 
-# SSL cert and chained certificate are dependants of Root-CA generation
-# in entrypoint script. Therefore skipping further checks is accepatable.
+# SSL cert and chained certificate are dependants of Root-CA generation.
+# Therefore skipping further checks is reasonable.
 if [[ -f "$root_ca_file" ]] \
     && [[ ! -f "$root_ca_host_file" ]]; then
         echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
