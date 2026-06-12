@@ -1,2 +1,5 @@
-.DS_Store
 .env
+.ssl_build_stamp
+
+.DS_Store
+Thumbs.db

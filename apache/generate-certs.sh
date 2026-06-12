@@ -13,49 +13,36 @@ signing_req="/opt/pki/csr/wildcard.lamp.localhost.csr"
 wildcard_key="/opt/pki/private/wildcard.lamp.localhost.key"
 wildcard_cert="/opt/pki/certs/wildcard.lamp.localhost.crt"
 
+echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+echo "Generating Root-CA certificate"
+echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-if [[ ! -f "$root_ca_key" ]] \
-    || [[ ! -f "$root_ca_cert" ]] \
-    || [[ "${RENEW_SSL_CERT_ON_BUILD}" -eq 1 ]]; then
-    echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    echo "Generating Root-CA certificate"
-    echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+openssl genrsa -out "$root_ca_key" 4096 && \
+chmod 600 "$root_ca_key" && \
+openssl req -config "$ca_conf" \
+            -key "$root_ca_key" \
+            -new -x509 \
+            -days 3650 \
+            -sha256 \
+            -extensions v3_ca \
+            -out "$root_ca_cert"
 
-    openssl genrsa -out "$root_ca_key" 4096 && \
-    chmod 600 "$root_ca_key" && \
-    openssl req -config "$ca_conf" \
-                -key "$root_ca_key" \
-                -new -x509 \
-                -days 3650 \
-                -sha256 \
-                -extensions v3_ca \
-                -out "$root_ca_cert" && \
-    cp "$root_ca_cert" /usr/local/share/ca-certificates/ && \
-    update-ca-certificates
+echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+echo "Generating SSL certificate for lamp.localhost"
+echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-    echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    echo "Generating SSL certificate for lamp.localhost"
-    echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+openssl genrsa -out "$wildcard_key" 2048 && \
+openssl req -new \
+            -key "$wildcard_key" \
+            -out "$signing_req" \
+            -config "$request_conf"
 
-    openssl genrsa -out "$wildcard_key" 2048 && \
-    openssl req -new \
-                -key "$wildcard_key" \
-                -out "$signing_req" \
-                -config "$request_conf"
-
-    openssl x509 -req \
-                 -in "$signing_req" \
-                 -CA "$root_ca_cert" \
-                 -CAkey "$root_ca_key" \
-                 -CAcreateserial \
-                 -out "$wildcard_cert" \
-                 -days 825 \
-                 -sha256 \
-                 -extfile "$wildcard_cert_conf"
-fi
-
-if [[ -f "$wildcard_key" ]] \
-    && [[ -f "$wildcard_cert" ]]; then 
-    a2dissite default-ssl && \
-    a2ensite 000-default-ssl
-fi;
+openssl x509 -req \
+             -in "$signing_req" \
+             -CA "$root_ca_cert" \
+             -CAkey "$root_ca_key" \
+             -CAcreateserial \
+             -out "$wildcard_cert" \
+             -days 825 \
+             -sha256 \
+             -extfile "$wildcard_cert_conf"

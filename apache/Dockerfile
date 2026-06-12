@@ -1,3 +1,38 @@
+FROM ubuntu:24.04 AS cert-generator
+
+ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN set -euo pipefail && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends --no-install-suggests \
+        openssl \
+        ssl-cert
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# CA, SAN and Req configurations
+COPY ./apache/ssl/conf/CA_lamp.localhost.cnf           /opt/pki/CA_lamp.localhost.cnf
+COPY ./apache/ssl/conf/wildcard.lamp.localhost.san.cnf /opt/pki/csr/wildcard.lamp.localhost.san.cnf
+COPY ./apache/ssl/conf/req.cnf                         /opt/pki/csr/req.cnf
+
+# Generate self-signed cert and use in Apache
+COPY ./apache/generate-certs.sh /usr/local/bin/generate-certs.sh
+
+# Create directories for SSL certificate self-signed by self-generated Root-CA
+RUN mkdir -p /opt/pki/certs \
+             /opt/pki/crl \
+             /opt/pki/csr \
+             /opt/pki/private && \
+    chmod 700 /opt/pki/private
+
+# Skip cache if renewal wanted
+ARG SSL_BUILD_STAMP
+RUN chmod +x /usr/local/bin/generate-certs.sh && \
+    /usr/local/bin/generate-certs.sh;
+
+CMD ["echo", "Certificates have been loaded."]
+
+
 FROM ubuntu:24.04
 
 ARG SERVERNAME='apache'
@@ -47,19 +82,25 @@ RUN mkdir -p /opt/pki/certs \
              /opt/pki/private && \
     chmod 700 /opt/pki/private
 
-# CA, SAN and Req configurations
-COPY ./apache/ssl/conf/CA_lamp.localhost.cnf           /opt/pki/CA_lamp.localhost.cnf
-COPY ./apache/ssl/conf/wildcard.lamp.localhost.san.cnf /opt/pki/csr/wildcard.lamp.localhost.san.cnf
-COPY ./apache/ssl/conf/req.cnf                         /opt/pki/csr/req.cnf
-
 # Apache SSL configuration for selfsigned cert and vhosts proxied to fpm-server
 COPY ./apache/000-default-ssl.conf /etc/apache2/sites-available/000-default-ssl.conf
 COPY ./apache/elements/ssl-common.conf /etc/apache2/elements/ssl-common.conf
 RUN echo "IncludeOptional fpm-sites/*.conf" > /etc/apache2/sites-available/include-fpm-sites.conf && \
     a2ensite include-fpm-sites
 
-# Generate self-signed cert and use in Apache
-COPY ./apache/generate-certs.sh /usr/local/bin/generate-certs.sh
+COPY --from=cert-generator /opt/pki/private/lamp.localhost-rootCA.key /opt/pki/private/lamp.localhost-rootCA.key
+COPY --from=cert-generator /opt/pki/certs/lamp.localhost-rootCA.crt /opt/pki/certs/lamp.localhost-rootCA.crt
+COPY --from=cert-generator /opt/pki/private/wildcard.lamp.localhost.key /opt/pki/private/wildcard.lamp.localhost.key
+COPY --from=cert-generator /opt/pki/certs/wildcard.lamp.localhost.crt /opt/pki/certs/wildcard.lamp.localhost.crt
+
+RUN cp -f /opt/pki/certs/lamp.localhost-rootCA.crt /usr/local/share/ca-certificates/ && \
+    update-ca-certificates
+
+RUN if [[ -f "/opt/pki/private/wildcard.lamp.localhost.key" ]] \
+        && [[ -f "/opt/pki/certs/wildcard.lamp.localhost.crt" ]]; then \
+            a2dissite default-ssl && \
+            a2ensite 000-default-ssl; \
+    fi;
 
 RUN mkdir -p /var/log/supervisor
 RUN mkdir -p /var/run/apache2
@@ -71,11 +112,6 @@ RUN ln -sf /dev/stdout /var/log/apache2/access.log && \
 COPY ./apache/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 80 443
-
-# Skip cache if renewal wanted
-ARG RENEW_SSL_CERT_ON_BUILD
-RUN chmod +x /usr/local/bin/generate-certs.sh && \
-    if [ ${RENEW_SSL_CERT_ON_BUILD} -gt 0 ]; then /usr/local/bin/generate-certs.sh; fi;
 
 ######
 

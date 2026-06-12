@@ -13,15 +13,17 @@ ifneq ($(wildcard .env),)
     export
 endif
 
+SSL_BUILD_FILE = .ssl_build_stamp
+_init := $(shell [ ! -f $(SSL_BUILD_FILE) ] && date +%s > $(SSL_BUILD_FILE))
+SSL_BUILD_STAMP := $(shell cat $(SSL_BUILD_FILE))
+
 RENEW_SSL_CERT_ON_BUILD ?= 0
-CACHE_BUST ?= 0
-CACHE_BUST := $(if $(filter 1,$(RENEW_SSL_CERT_ON_BUILD)),$(shell date +%s),0)
-CACHING ?= 1
-CACHING := $(if $(filter 1,$(CACHING)),'','--no-cache')
+SSL_BUILD_STAMP := $(if $(filter 1,$(RENEW_SSL_CERT_ON_BUILD)),$(shell date +%s),$(SSL_BUILD_STAMP))
+
 TAIL_BUILD_LOG ?= 0
 TAIL_BUILD_LOG := $(if $(filter 0,$(TAIL_BUILD_LOG)),'','--progress=plain')
 
-VERSIONS := 8.2 8.3 8.4 8.5
+PHP_VERSIONS := 8.2 8.3 8.4 8.5
 
 .DEFAULT_GOAL := help
 .PHONY: build build-apache build-php build-single-php up logs down
@@ -34,32 +36,28 @@ help: ## Display this help
 build-apache: ## Build the fronting apache image
 	$(call load, \
 		echo-info "Start building image for Apache server"; \
+		echo-info SSL_BUILD_STAMP: $$(cat $(SSL_BUILD_FILE)); \
+		echo-info SSL_BUILD_STAMP: $(SSL_BUILD_STAMP); \
 		docker compose down apache; \
-		echo-info RENEW_SSL_CERT_ON_BUILD $(RENEW_SSL_CERT_ON_BUILD); \
-		echo-info CACHE_BUST $(CACHE_BUST); \
 		docker build \
 			$(TAIL_BUILD_LOG) \
-			$(CACHING) \
 			--pull \
 			--build-arg PHP_VERSION=$(PHP_VERSION) \
 			--build-arg HOST_UID=$(HOST_UID) \
 			--build-arg HOST_GID=$(HOST_GID) \
-			--build-arg RENEW_SSL_CERT_ON_BUILD=$(CACHE_BUST) \
+			--build-arg SSL_BUILD_STAMP=$(SSL_BUILD_STAMP) \
 			-t apache \
 			-f apache/Dockerfile . ; \
+		echo $(SSL_BUILD_STAMP) > .ssl_build_stamp; \
 	)
-
-renew-certs: ## Renew SSL Root-CA and certificate
-	docker compose build --build-arg RENEW_SSL_CERT_ON_BUILD=$(shell date +%s)
 
 build-php: ## Build all php images (PHP-FPM server)
 	$(call load, \
-		for VERSION in $(VERSIONS); do \
+		for VERSION in $(PHP_VERSIONS); do \
 			echo-info "Start building image for PHP version $$VERSION"; \
 			docker compose down php; \
 			docker build \
 				$(TAIL_BUILD_LOG) \
-				$(CACHING) \
 				--pull \
 				--build-arg PHP_VERSION=$$VERSION \
 				--build-arg HOST_UID=$(HOST_UID) \
@@ -77,16 +75,15 @@ build-single-php: ## Build a specific php image (PHP-FPM server) only
 			exit 1; \
 		fi; \
 		\
-		if [ -z "$(filter $(PHP_VERSION), $(VERSIONS))" ]; then \
+		if [ -z "$(filter $(PHP_VERSION), $(PHP_VERSIONS))" ]; then \
 			echo-error "Invalid PHP version $(PHP_VERSION)"; \
-			echo-info "Available versions: $(VERSIONS)"; \
+			echo-info "Available PHP_VERSIONS: $(PHP_VERSIONS)"; \
 			exit 1; \
 		fi; \
 		echo-info "Building image for PHP version $(PHP_VERSION)"; \
 		docker compose down php; \
 		docker build \
 			$(TAIL_BUILD_LOG) \
-			$(CACHING) \
 			--pull \
 			--build-arg PHP_VERSION=$(PHP_VERSION) \
 			--build-arg HOST_UID=$(HOST_UID) \

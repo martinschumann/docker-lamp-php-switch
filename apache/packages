@@ -1,9 +1,12 @@
-sudo
+ca-certificates
+curl
+dnsutils
+dos2unix
+git
 htop
 mariadb-client
-curl
-git
 openssl
+ssh
+sudo
 vim
-ca-certificates
-dnsutils
+wget
