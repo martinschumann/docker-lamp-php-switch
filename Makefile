@@ -1,3 +1,17 @@
+ESC := $(shell printf '\033')
+BLUE := $(ESC)[36m
+RESET := $(ESC)[0m
+
+define BANNER
+$(BLUE)  ┌─────────────────────────────────────────────┐$(RESET)
+$(BLUE)  │ ┬  ┌─┐┌┬┐┌─┐   ┌─┐┬ ┬┌─┐   ┌─┐┬ ┬┬┌┬┐┌─┐┬ ┬ │$(RESET)
+$(BLUE)  │ │  ├─┤│││├─┘───├─┘├─┤├─┘───└─┐││││ │ │  ├─┤ │$(RESET)
+$(BLUE)  │ ┴─┘┴ ┴┴ ┴┴     ┴  ┴ ┴┴     └─┘└┴┘┴ ┴ └─┘┴ ┴ │$(RESET)
+$(BLUE)  └─────────────────────────────────────────────┘$(RESET)
+endef
+
+$(info $(BANNER))
+
 MAKEFLAGS += --silent
 
 define load
@@ -31,7 +45,7 @@ build: down build-apache build-php
 
 help: ## Display this help
 	@echo "Avalailabe targets:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(ESC)[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 build-apache: ## Build the fronting apache image
 	$(call load, \
