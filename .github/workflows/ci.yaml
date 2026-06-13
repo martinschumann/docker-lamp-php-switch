@@ -63,6 +63,9 @@ jobs:
           exit 1
         fi
 
+    - name: Print HTTPS Response
+      run: curl -sS -f -D - https://examplehost.lamp.localhost:443/
+
     - name: Test HTTPS Response
       run: |
         curl -sS -f -D - https://examplehost.lamp.localhost:443/ | egrep "https://www.php.net/" > /dev/null
