@@ -22,14 +22,16 @@ jobs:
 
     - name: Build and start compose stack
       run: |
-        make build-apache && make build-single-php PHP_VERSION=8.3 && make up
+        make build-apache && make build-single-php PHP_VERSION=8.3 && make up && make up
 
     - name: Allow containers to initialize
       run: sleep 5
 
     - name: Check running containers
       run: |
-        [[ "$(docker compose ps -q --filter "status=running" | wc -l)" -eq "$(docker compose config --services | wc -l)" ]] || (docker compose ps && exit 1)
+        RUNNING=$(docker compose ps -q --filter "status=running" | wc -l)
+        TOTAL=$(docker compose config --services | wc -l)
+        (( RUNNING == TOTAL )) || (docker compose ps && exit 1)
 
     - name: Configure local DNS routing
       run: echo "127.0.0.1 examplehost.lamp.localhost" | sudo tee -a /etc/hosts
