@@ -50,8 +50,10 @@ jobs:
     - name: Test HTTP Response
       run: |
         curl -sS -f -D - http://localhost:80/ | egrep "Apache2 Ubuntu Default Page" > /dev/null
-        CURL_EXIT=${PIPESTATUS[0]}
-        GREP_EXIT=${PIPESTATUS[1]}
+        PIPE_RTS=("${PIPESTATUS[@]}")
+
+        CURL_EXIT=${PIPE_RTS[0]}
+        GREP_EXIT=${PIPE_RTS[1]}
 
         if [ $CURL_EXIT -ne 0 ]; then
           echo "[FAIL] Connection failed. (curl exit code: $CURL_EXIT)"
@@ -69,8 +71,10 @@ jobs:
     - name: Test HTTPS Response
       run: |
         curl -sS -f -D - https://examplehost.lamp.localhost:443/ | egrep "https://www.php.net/" > /dev/null
-        CURL_EXIT=${PIPESTATUS[0]}
-        GREP_EXIT=${PIPESTATUS[1]}
+        PIPE_RTS=("${PIPESTATUS[@]}")
+
+        CURL_EXIT=${PIPE_RTS[0]}
+        GREP_EXIT=${PIPE_RTS[1]}
 
         if [ $CURL_EXIT -ne 0 ]; then
           echo "[FAIL] Connection failed. (curl exit code: $CURL_EXIT)"
