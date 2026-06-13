@@ -41,6 +41,8 @@ services:
     image: php-fpm:${PHP_VERSION}
     container_name: php-fpm-${PHP_VERSION}
     hostname: php-${PHP_VERSION}
+    tty: true
+    stdin_open: true
     env_file:
       - ./.env
     networks:
