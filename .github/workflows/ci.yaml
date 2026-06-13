@@ -1,0 +1,40 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build and start compose stack
+      run: make build && make up
+
+    - name: Check running containers
+      run: |
+        [ $(docker compose ps --services --filter "status=running" | wc -l) -eq $(docker compose config --services | wc -l) ] || (docker compose ps && exit 1)
+
+    - name: Configure local DNS routing
+      run: echo "127.0.0.1 examplehost.lamp.localhost" | sudo tee -a /etc/hosts
+
+    - name: Install custom SSL Root CA
+      run: |
+        sudo cp ./apache/ssl/certs/lamp.localhost-rootCA.crt /usr/local/share/ca-certificates/lamp.localhost-rootCA.crt
+        sudo update-ca-certificates
+
+    - name: Test HTTP Response
+      run: curl -f -D - http://localhost:80/ || (echo "[ERROR] Apache on Port 80 failed!"; exit 1)
+
+    - name: Test HTTPS Response
+      run: curl -fk -D - https://localhost:443/ || (echo "[ERROR] Apache on Port 443 failed!"; exit 1)
+
+    - name: Shutdown LAMP Stack
+      if: always()
+      run: make down
