@@ -22,7 +22,7 @@ jobs:
 
     - name: Build and start compose stack
       run: |
-        make build-apache && make build-single-php PHP_VERSION=8.3 && make up
+        make build-apache && make build-single-php PHP_VERSION=8.3 && make up && docker compose ps -a && docker compose logs php
 
     - name: Allow containers to initialize
       run: sleep 5
