@@ -50,8 +50,6 @@ help: ## Display this help
 build-apache: ## Build the fronting apache image
 	$(call load, \
 		echo-info "Start building image for Apache server"; \
-		echo-info SSL_BUILD_STAMP: $$(cat $(SSL_BUILD_FILE)); \
-		echo-info SSL_BUILD_STAMP: $(SSL_BUILD_STAMP); \
 		docker compose down apache; \
 		docker build \
 			$(TAIL_BUILD_LOG) \
