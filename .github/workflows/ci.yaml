@@ -18,11 +18,17 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Create temporary .env file
-      run: cp .env-example .env
+      run: |
+        cp .env-example .env
+        echo "HOST_UID=$(id -u)" >> .env
+        echo "HOST_GID=$(id -g)" >> .env
 
     - name: Build and start compose stack
       run: |
-        make build-apache && make build-single-php PHP_VERSION=8.3 && make up && docker compose ps -a && docker compose logs php
+        make build-apache
+        make build-single-php PHP_VERSION=8.3
+        make up
+        docker compose ps -a
 
     - name: Allow containers to initialize
       run: sleep 5
