@@ -47,27 +47,37 @@ jobs:
         sudo cp ./apache/ssl/certs/lamp.localhost-rootCA.crt /usr/local/share/ca-certificates/lamp.localhost-rootCA.crt
         sudo update-ca-certificates
 
-    # - name: Test HTTP Response
-    #   run: |
-    #     curl -sS -f -D - http://localhost:80/ | egrep "Apache2 Ubuntu Default Page" > /dev/null || {
-    #       echo "[ERROR] Apache delivers unexpected content.";
-    #       exit 1
-    #     }
-
-    # - name: Test HTTPS Response
-    #   run: |
-    #     curl -sS -f -D - https://examplehost.lamp.localhost:443/ | egrep "https://www.php.net/" > /dev/null || {
-    #       echo "[ERROR] Apache delivers unexpected content.";
-    #       exit 1
-    #     }
-
     - name: Test HTTP Response
       run: |
-        curl -sS -f -D - http://localhost:80/
+        curl -sS -f -D - http://localhost:80/ | egrep "Apache2 Ubuntu Default Page" > /dev/null
+        CURL_EXIT=${PIPESTATUS[0]}
+        GREP_EXIT=${PIPESTATUS[1]}
+
+        if [ $CURL_EXIT -ne 0 ]; then
+          echo "[ERROR] Connection failed. (curl exit code: $CURL_EXIT)"
+          exit 1
+        fi
+        
+        if [ $GREP_EXIT -ne 0 ]; then
+          echo "[ERROR] Expected content not found. (grep exit code: $GREP_EXIT)"
+          exit 1
+        fi
 
     - name: Test HTTPS Response
       run: |
-        curl -sS -f -D - https://examplehost.lamp.localhost:443/
+        curl -sS -f -D - https://examplehost.lamp.localhost:443/ | egrep "https://www.php.net/" > /dev/null
+        CURL_EXIT=${PIPESTATUS[0]}
+        GREP_EXIT=${PIPESTATUS[1]}
+
+        if [ $CURL_EXIT -ne 0 ]; then
+          echo "[ERROR] Connection failed. (curl exit code: $CURL_EXIT)"
+          exit 1
+        fi
+        
+        if [ $GREP_EXIT -ne 0 ]; then
+          echo "[ERROR] Expected content not found. (grep exit code: $GREP_EXIT)"
+          exit 1
+        fi
 
     - name: Shutdown LAMP Stack
       if: always()
