@@ -18,7 +18,7 @@ jobs:
       run: cp .env-example .env
 
     - name: Build and start compose stack
-      run: make build-apache && build-single-php PHP_VERSION=8.3 && make up
+      run: make build-apache && make build-single-php PHP_VERSION=8.3 && make up
 
     - name: Allow containers to initialize
       run: sleep 5
