@@ -48,10 +48,18 @@ jobs:
         sudo update-ca-certificates
 
     - name: Test HTTP Response
-      run: curl -f -D - http://localhost:80/ || (echo "[ERROR] Apache on Port 80 failed!"; exit 1)
+      run: |
+        curl -sS -f -D - http://localhost:80/ | grep -q "Apache2 Ubuntu Default Page" || {
+        echo "[ERROR] Apache delivers unexpected content.";
+          exit 1
+        }
 
     - name: Test HTTPS Response
-      run: curl -fk -D - https://localhost:443/ || (echo "[ERROR] Apache on Port 443 failed!"; exit 1)
+      run: |
+        curl -sS -f -D - https://examplehost.lamp.localhost:443/ | grep -q "https://www.php.net/" || {
+        echo "[ERROR] Apache delivers unexpected content.";
+          exit 1
+        }
 
     - name: Shutdown LAMP Stack
       if: always()
