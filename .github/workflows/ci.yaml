@@ -49,15 +49,15 @@ jobs:
 
     - name: Test HTTP Response
       run: |
-        curl -sS -f -D - http://localhost:80/ | grep -q "Apache2 Ubuntu Default Page" || {
-        echo "[ERROR] Apache delivers unexpected content.";
+        curl -sS -f -D - http://localhost:80/ | egrep "Apache2 Ubuntu Default Page" > /dev/null || {
+          echo "[ERROR] Apache delivers unexpected content.";
           exit 1
         }
 
     - name: Test HTTPS Response
       run: |
-        curl -sS -f -D - https://examplehost.lamp.localhost:443/ | grep -q "https://www.php.net/" || {
-        echo "[ERROR] Apache delivers unexpected content.";
+        curl -sS -f -D - https://examplehost.lamp.localhost:443/ | egrep "https://www.php.net/" > /dev/null || {
+          echo "[ERROR] Apache delivers unexpected content.";
           exit 1
         }
 
