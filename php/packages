@@ -5,6 +5,7 @@ curl
 git
 gosu
 htop
+iputils-ping
 make
 mariadb-client
 socat
