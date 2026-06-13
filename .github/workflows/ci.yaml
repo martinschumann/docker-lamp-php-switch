@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  PHP_VERSION: 8.3
+
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
@@ -18,8 +21,6 @@ jobs:
       run: cp .env-example .env
 
     - name: Build and start compose stack
-      env:
-        PHP_VERSION: 8.3
       run: |
         make build-apache && make build-single-php PHP_VERSION=8.3 && make up
 
