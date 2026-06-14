@@ -16,15 +16,15 @@ if [[ "$(id -u)" = "0" ]]; then
         sudo -u ubuntu touch /home/ubuntu/.host-data/.gitconfig
         sudo -u ubuntu touch /home/ubuntu/.host-data/.bash_history
 
-        if [[ ! -f /home/ubuntu/.gitconfig ]]; then
+        if [[ ! -e /home/ubuntu/.gitconfig ]]; then
             sudo -u ubuntu ln -sr /home/ubuntu/.host-data/.gitconfig /home/ubuntu/.gitconfig
         fi
 
-        if [[ ! -f /home/ubuntu/.bash_history ]]; then
+        if [[ ! -e /home/ubuntu/.bash_history ]]; then
             sudo -u ubuntu ln -sr /home/ubuntu/.host-data/.bash_history /home/ubuntu/.bash_history
         fi
 
-        if [[ ! -f /home/ubuntu/vhosts ]]; then
+        if [[ ! -e /home/ubuntu/vhosts ]]; then
             sudo -u ubuntu ln -sr /srv/apache2/vhosts /home/ubuntu/
         fi
     fi
