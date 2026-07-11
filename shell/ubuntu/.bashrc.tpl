@@ -128,6 +128,15 @@ if [ -d ~/.bashrc.d ]; then
   unset i
 fi
 
+if [ -d ~/.bashrc.d/custom ]; then
+  for i in $(run-parts --list --regex '^[a-zA-Z0-9_][a-zA-Z0-9._-]*\.sh$' ~/.bashrc.d/custom); do
+    if [ -r $i ]; then
+      . $i
+    fi
+  done
+  unset i
+fi
+
 cd ~/
 ######################################################
 # Customization for Docker container "lamp-php-switch"

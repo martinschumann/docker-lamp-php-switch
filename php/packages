@@ -11,4 +11,6 @@ mariadb-client
 socat
 ssh
 sudo
+unzip
 vim
+zip

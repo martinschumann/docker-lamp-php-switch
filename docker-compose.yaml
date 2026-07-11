@@ -1,18 +1,40 @@
 name: lamp-php-switch
 services:
+  cert-generator:
+    image: cert-generator:latest
+    container_name: init-cert-generator
+    restart: "no"
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.9
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    volumes:
+      # SSL Certs
+      - type: volume
+        source: pki-data
+        target: /opt/pki
+      - type: bind
+        source: ./apache/ssl/conf
+        target: /etc/ssl/conf
+        read_only: false
 
   apache:
     image: apache
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
     container_name: apache
     hostname: apache
     env_file:
       - ./.env
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.10
     dns:
       - 8.8.8.8
       - 8.8.4.4
-    networks:
-      internal_net:
-        ipv4_address: 172.16.1.10
     ports:
       - "80:80"
       - "443:443"
@@ -31,6 +53,9 @@ services:
         source: ./apache/ssl/certs
         target: /etc/ssl/export
         read_only: false
+      - type: volume
+        source: pki-data
+        target: /opt/pki
       # Config files editable on the host and monitored by watchmedo
       - type: bind
         source: ./vhosts-configs
@@ -39,6 +64,9 @@ services:
 
   php:
     image: php-fpm:${PHP_VERSION}
+    depends_on:
+      mariadb:
+        condition: service_started
     container_name: php-fpm-${PHP_VERSION}
     hostname: php-${PHP_VERSION}
     tty: true
@@ -46,7 +74,7 @@ services:
     env_file:
       - ./.env
     networks:
-      internal_net:
+      internal-net:
         ipv4_address: 172.16.1.11
     dns:
       - 8.8.8.8
@@ -91,7 +119,7 @@ services:
     ports:
       - "3306:3306"
     networks:
-      internal_net:
+      internal-net:
         ipv4_address: 172.16.1.12
     environment:
       - MYSQL_ROOT_PASSWORD
@@ -105,14 +133,15 @@ services:
         target: /run/mysqld/
 
 networks:
-  internal_net:
+  internal-net:
+    name: internal-net
     driver: bridge
     ipam:
       config:
         - subnet: 172.16.1.0/24
 
 volumes:
+  pki-data:
   mysql-data:
   mariadb-sockets-dir:
   fpm-sockets-dir:
-  vhosts:
