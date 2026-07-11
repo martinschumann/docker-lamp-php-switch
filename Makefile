@@ -50,6 +50,7 @@ help: ## Display this help
 build-cert: ## Build the cert-generator image
 	$(call load, \
 		echo-info "Start building image for cert generation"; \
+		echo-info "SSL_BUILD_STAMP: $(SSL_BUILD_STAMP)"; \
 		docker compose down cert-generator; \
 		docker build \
 			$(TAIL_BUILD_LOG) \
