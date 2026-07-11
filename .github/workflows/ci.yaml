@@ -34,7 +34,9 @@ jobs:
         ls -lah ./apache/ssl/certs/
 
     - name: Allow containers to initialize
-      run: sleep 5
+      run: |
+        sleep 5
+        docker compose logs
 
     - name: Check running containers
       run: |
