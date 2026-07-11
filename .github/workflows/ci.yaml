@@ -25,6 +25,7 @@ jobs:
 
     - name: Build and start compose stack
       run: |
+        make build-cert
         make build-apache
         make build-single-php PHP_VERSION=8.3
         make up
@@ -37,7 +38,7 @@ jobs:
       run: |
         RUNNING=$(docker compose ps -q --filter "status=running" | wc -l)
         TOTAL=$(docker compose config --services | wc -l)
-        (( RUNNING == TOTAL )) || (docker compose ps && exit 1)
+        (( 1 + RUNNING == TOTAL )) || (docker compose ps && exit 1)
 
     - name: Configure local DNS routing
       run: echo "127.0.0.1 examplehost.lamp.localhost" | sudo tee -a /etc/hosts
