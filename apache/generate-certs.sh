@@ -80,7 +80,9 @@ if (( SSL_BUILD_STAMP == current_ssl_build_stamp)); then
     cat << 'EOF'
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 SSL_BUILD_STAMP not renewed and certification renewal not requested.
-Exiting without any action."
+Exiting without any action.
+SSL_BUILD_STAMP: "$SSL_BUILD_STAMP"
+current_ssl_build_stamp: "$current_ssl_build_stamp"
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 EOF
 fi
