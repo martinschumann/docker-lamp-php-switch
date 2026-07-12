@@ -28,10 +28,10 @@ jobs:
         make build-cert
         make build-apache
         make build-single-php PHP_VERSION=8.3
+        ls -lah ./apache/ssl/conf/.ssl_build_stamp
+        ls -lah ./apache/ssl/certs/
         make up
         docker compose ps -a
-        cat ./apache/ssl/conf/.ssl_build_stamp
-        ls -lah ./apache/ssl/certs/
 
     - name: Allow containers to initialize
       run: |

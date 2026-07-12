@@ -26,7 +26,7 @@ if [[ -f "$ca_conf" ]] \
     && [[ -f "$wildcard_cert_conf" ]] \
     && [[ -f "$request_conf" ]] \
     && (( SSL_BUILD_STAMP > current_ssl_build_stamp || current_ssl_build_stamp == 0 )); then
-        cat << 'EOF'
+        cat << EOF
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 Generating Root-CA certificate.
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -42,7 +42,7 @@ EOF
                     -extensions v3_ca \
                     -out "$root_ca_cert"
 
-        cat << 'EOF'
+        cat << EOF
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 Generating SSL certificate for lamp.localhost.
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -77,7 +77,7 @@ EOF
 fi
 
 if (( SSL_BUILD_STAMP == current_ssl_build_stamp)); then
-    cat << 'EOF'
+    cat << EOF
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 SSL_BUILD_STAMP not renewed and certification renewal not requested.
 Exiting without any action.
