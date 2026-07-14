@@ -16,9 +16,9 @@ log() {
     line=$(printf "[%s] [ENTRYPOINT] [%s] %s\n" "$timestamp" "$level" "$message")
 
     if [[ "$level" == "ERROR" || "$level" == "WARN" ]]; then
-        printf "%s" "$line" >&2
+        printf "%s\n" "$line" >&2
     else
-        printf "%s" "$line"
+        printf "%s\n" "$line"
     fi
 }
 

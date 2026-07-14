@@ -16,9 +16,9 @@ log() {
     line=$(printf "[%s] [ENTRYPOINT] [%s] %s\n" "$timestamp" "$level" "$message")
 
     if [[ "$level" == "ERROR" || "$level" == "WARN" ]]; then
-        printf "%s" "$line" >&2
+        printf "%s\n" "$line" >&2
     else
-        printf "%s" "$line"
+        printf "%s\n" "$line"
     fi
 }
 
@@ -57,7 +57,7 @@ if [[ -f "$ca_conf" ]] \
                     -days 3650 \
                     -sha256 \
                     -extensions v3_ca \
-                    -out "$root_ca_cert"
+                    -out "$root_ca_cert" 2>&1
 
         log "INFO" "Generating SSL certificate for lamp.localhost."
 
@@ -65,7 +65,7 @@ if [[ -f "$ca_conf" ]] \
         openssl req -new \
                     -key "$wildcard_key" \
                     -out "$signing_req" \
-                    -config "$request_conf"
+                    -config "$request_conf" 2>&1
 
         openssl x509 -req \
                      -in "$signing_req" \
@@ -75,7 +75,7 @@ if [[ -f "$ca_conf" ]] \
                      -out "$wildcard_cert" \
                      -days 825 \
                      -sha256 \
-                     -extfile "$wildcard_cert_conf"
+                     -extfile "$wildcard_cert_conf" 2>&1
 
         date +%s > /etc/ssl/conf/.ssl_build_stamp
 fi
