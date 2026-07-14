@@ -25,11 +25,17 @@ cp .env-example .env
 make build && make up
 ```
 
-Root-Certificate has to be imported. On MacOS that may be done by:
+Root-Certificate has to be imported. Use one of these:
 ```
-sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./apache/ssl/certs/lamp.localhost-rootCA.crt
+make cert-import-macos
 ```
-Or by dropping the cert file into Keychain Access and setting it trusted.
+```
+make cert-import-linux
+```
+```
+make cert-import-windows
+```
+Last one is not yet implemented.
 
 Log into the php-fpm container.
 ```
