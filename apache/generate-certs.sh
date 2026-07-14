@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+log() {
+    local level="${1:-INFO}"
+    local message="${2:-}"
+    local timestamp
+    local line
+
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+
+    # Replace linefeeds with a safe character sequence
+    message="${message//$'\n'/\\n}"
+    message="${message//$'\r'/\\r}"
+
+    line=$(printf "[%s] [ENTRYPOINT] [%s] %s\n" "$timestamp" "$level" "$message")
+
+    if [[ "$level" == "ERROR" || "$level" == "WARN" ]]; then
+        printf "%s\n" "$line" >&2
+    else
+        printf "%s\n" "$line"
+    fi
+}
+
 current_ssl_build_stamp=$(cat /etc/ssl/conf/.ssl_build_stamp 2>/dev/null || echo "0")
 
 # Create directories for SSL certificate self-signed by self-generated Root-CA
@@ -26,11 +47,7 @@ if [[ -f "$ca_conf" ]] \
     && [[ -f "$wildcard_cert_conf" ]] \
     && [[ -f "$request_conf" ]] \
     && (( SSL_BUILD_STAMP > current_ssl_build_stamp || current_ssl_build_stamp == 0 )); then
-        cat << EOF
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Generating Root-CA certificate.
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-EOF
+        log "INFO" "Generating Root-CA certificate."
 
         openssl genrsa -out "$root_ca_key" 4096 && \
         chmod 600 "$root_ca_key" && \
@@ -40,19 +57,15 @@ EOF
                     -days 3650 \
                     -sha256 \
                     -extensions v3_ca \
-                    -out "$root_ca_cert"
+                    -out "$root_ca_cert" 2>&1
 
-        cat << EOF
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Generating SSL certificate for lamp.localhost.
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-EOF
+        log "INFO" "Generating SSL certificate for lamp.localhost."
 
         openssl genrsa -out "$wildcard_key" 2048 && \
         openssl req -new \
                     -key "$wildcard_key" \
                     -out "$signing_req" \
-                    -config "$request_conf"
+                    -config "$request_conf" 2>&1
 
         openssl x509 -req \
                      -in "$signing_req" \
@@ -62,29 +75,19 @@ EOF
                      -out "$wildcard_cert" \
                      -days 825 \
                      -sha256 \
-                     -extfile "$wildcard_cert_conf"
+                     -extfile "$wildcard_cert_conf" 2>&1
 
-        echo -n "$SSL_BUILD_STAMP" > /etc/ssl/conf/.ssl_build_stamp
+        date +%s > /etc/ssl/conf/.ssl_build_stamp
 fi
 
 if [[ ! -f "$ca_conf" || ! -f "$wildcard_cert_conf" || ! -f "$request_conf" ]]; then
-    cat << 'EOF'
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-ERROR: Config files for generating SSL-Certificates are missting.
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-EOF
+    log "ERROR" "Config files for generating SSL-Certificates are missting."
+
     exit 1
 fi
 
-if (( SSL_BUILD_STAMP == current_ssl_build_stamp)); then
-    cat << EOF
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-SSL_BUILD_STAMP not renewed and certification renewal not requested.
-Exiting without any action.
-SSL_BUILD_STAMP: "$SSL_BUILD_STAMP"
-current_ssl_build_stamp: "$current_ssl_build_stamp"
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-EOF
+if (( SSL_BUILD_STAMP == current_ssl_build_stamp && SSL_BUILD_STAMP > 0 )); then
+    log "INFO" "SSL_BUILD_STAMP not renewed and certification renewal not requested. Exiting without any action."
 fi
 
 exit 0

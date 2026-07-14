@@ -3,8 +3,9 @@ name: CI Pipeline
 on:
   push:
     branches: [ "main" ]
+  
   pull_request:
-    branches: [ "main" ]
+    branches: [ "dev", "main" ]
 
 env:
   PHP_VERSION: 8.3
@@ -28,17 +29,14 @@ jobs:
         make build-cert
         make build-apache
         make build-single-php PHP_VERSION=8.3
-        ls -lah ./apache/ssl/conf/.ssl_build_stamp
-        ls -lah ./apache/ssl/certs/
         make up
         docker compose ps -a
 
     - name: Allow containers to initialize
       run: |
         sleep 5
-        docker compose logs
 
-    - name: Check running containers
+    - name: Check running containers (+1 init container)
       run: |
         RUNNING=$(docker compose ps -q --filter "status=running" | wc -l)
         TOTAL=$(docker compose config --services | wc -l)
@@ -48,9 +46,7 @@ jobs:
       run: echo "127.0.0.1 examplehost.lamp.localhost" | sudo tee -a /etc/hosts
 
     - name: Install custom SSL Root CA
-      run: |
-        sudo cp ./apache/ssl/certs/lamp.localhost-rootCA.crt /usr/local/share/ca-certificates/lamp.localhost-rootCA.crt
-        sudo update-ca-certificates
+      run: make cert-import-linux
 
     - name: Test HTTP Response
       run: |
