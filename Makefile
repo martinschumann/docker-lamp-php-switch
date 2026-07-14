@@ -27,7 +27,8 @@ ifneq ($(wildcard .env),)
     export
 endif
 
-SSL_BUILD_FILE = apache/ssl/conf/.ssl_build_stamp
+SSL_ROOT_CA_CERT = ./apache/ssl/certs/lamp.localhost-rootCA.crt
+SSL_BUILD_FILE = ./apache/ssl/conf/.ssl_build_stamp
 _init := $(shell [ ! -f $(SSL_BUILD_FILE) ] && echo 0 > $(SSL_BUILD_FILE))
 SSL_BUILD_STAMP := $(shell cat $(SSL_BUILD_FILE))
 RENEW_SSL_CERT_ON_BUILD ?= 0
@@ -40,11 +41,25 @@ PHP_VERSIONS := 8.2 8.3 8.4 8.5
 
 .DEFAULT_GOAL := help
 .PHONY: build build-cert build-apache build-php build-single-php up logs down
-build: down build-cert build-apache build-php ## Build all necessary images
 
 help: ## Display this help
 	@echo "Avalailabe targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(ESC)[36m%-25s\033[0m %s\n", $$1, $$2}'
+
+build: down build-cert build-apache build-php ## Build all necessary images
+
+up: ## Start the container stack
+	$(call load, \
+		test -n "$$PHP_VERSION" || { echo-error "PHP_VERSION must be set in .env"; exit 1; }; \
+		test -n "$$HOST_UID" || { echo-error "HOST_UID must be set in .env"; exit 1; }; \
+		test -n "$$HOST_GID" || { echo-error "HOST_GID must be set in .env"; exit 1; }; \
+		\
+		echo-info "Starting lamp-php-switch with PHP $$PHP_VERSION"; \
+		docker compose up -d; \
+	)
+
+down: ## Stop the container stack
+	docker compose down
 
 build-cert: ## Build the init-cert-generator image
 	$(call load, \
@@ -115,18 +130,24 @@ build-single-php: ## Build a specific php image (PHP-FPM server) only
 			-f php/Dockerfile . ; \
 	)
 
-up: ## Start the container
-	$(call load, \
-		test -n "$$PHP_VERSION" || { echo-error "PHP_VERSION must be set in .env"; exit 1; }; \
-		test -n "$$HOST_UID" || { echo-error "HOST_UID must be set in .env"; exit 1; }; \
-		test -n "$$HOST_GID" || { echo-error "HOST_GID must be set in .env"; exit 1; }; \
-		\
-		echo-info "Starting lamp-php-switch with PHP $$PHP_VERSION"; \
-		docker compose up -d; \
-	)
-
 logs: ## Tail logs
 	docker compose logs -f
 
-down: ## Stop the container
-	docker compose down
+cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
+	$(call load, \
+		[ -f $(SSL_ROOT_CA_CERT) ] || { echo-error "Root CA certificate not found: $(SSL_ROOT_CA_CERT)"; exit 1; }; \
+		sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./apache/ssl/certs/lamp.localhost-rootCA.crt; \
+	)
+
+cert-import-linux: ## Import the Root CA certificate into the Linux system trust store
+	$(call load, \
+		[ -f $(SSL_ROOT_CA_CERT) ] || { echo-error "Root CA certificate not found: $(SSL_ROOT_CA_CERT)"; exit 1; }; \
+		sudo cp $(SSL_ROOT_CA_CERT) /usr/local/share/ca-certificates/; \
+		sudo update-ca-certificates; \
+	)
+
+cert-import-windows: ## Not implemented
+	$(call load, \
+		echo-error "Not implemented."; \
+		exit 1; \
+	)
