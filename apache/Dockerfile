@@ -1,7 +1,7 @@
-###################################
-# cert-generator
-FROM ubuntu:24.04 AS cert-generator
-###################################
+########################################
+# init-cert-generator
+FROM ubuntu:24.04 AS init-cert-generator
+########################################
 
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]

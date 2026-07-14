@@ -1,7 +1,7 @@
 name: lamp-php-switch
 services:
-  cert-generator:
-    image: cert-generator:latest
+  init-cert-generator:
+    image: init-cert-generator:latest
     container_name: init-cert-generator
     restart: "no"
     networks:
@@ -23,7 +23,7 @@ services:
   apache:
     image: apache
     depends_on:
-      cert-generator:
+      init-cert-generator:
         condition: service_completed_successfully
     container_name: apache
     hostname: apache

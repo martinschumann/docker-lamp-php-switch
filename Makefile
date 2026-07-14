@@ -28,9 +28,8 @@ ifneq ($(wildcard .env),)
 endif
 
 SSL_BUILD_FILE = apache/ssl/conf/.ssl_build_stamp
-_init := $(shell [ ! -f $(SSL_BUILD_FILE) ] && date +%s > $(SSL_BUILD_FILE))
+_init := $(shell [ ! -f $(SSL_BUILD_FILE) ] && echo 0 > $(SSL_BUILD_FILE))
 SSL_BUILD_STAMP := $(shell cat $(SSL_BUILD_FILE))
-
 RENEW_SSL_CERT_ON_BUILD ?= 0
 SSL_BUILD_STAMP := $(if $(filter 1,$(RENEW_SSL_CERT_ON_BUILD)),$(shell date +%s),$(SSL_BUILD_STAMP))
 
@@ -47,17 +46,16 @@ help: ## Display this help
 	@echo "Avalailabe targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(ESC)[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-build-cert: ## Build the cert-generator image
+build-cert: ## Build the init-cert-generator image
 	$(call load, \
-		echo-info "Start building image for cert generation"; \
-		echo-info "SSL_BUILD_STAMP: $(SSL_BUILD_STAMP)"; \
-		docker compose down cert-generator; \
+		echo-info "Start building image for initial cert generation"; \
+		docker compose down init-cert-generator; \
 		docker build \
 			$(TAIL_BUILD_LOG) \
 			--pull \
 			--build-arg SSL_BUILD_STAMP=$(SSL_BUILD_STAMP) \
-			--target cert-generator \
-			-t cert-generator:latest \
+			--target init-cert-generator \
+			-t init-cert-generator:latest \
 			-f apache/Dockerfile . ; \
 	)
 
