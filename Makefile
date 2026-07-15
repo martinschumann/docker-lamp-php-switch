@@ -48,106 +48,140 @@ help: ## Display this help
 
 build: down build-cert build-apache build-php ## Build all necessary images
 
-up: ## Start the container stack
-	$(call load, \
-		test -n "$$PHP_VERSION" || { echo-error "PHP_VERSION must be set in .env"; exit 1; }; \
-		test -n "$$HOST_UID" || { echo-error "HOST_UID must be set in .env"; exit 1; }; \
-		test -n "$$HOST_GID" || { echo-error "HOST_GID must be set in .env"; exit 1; }; \
-		\
-		echo-info "Starting lamp-php-switch with PHP $$PHP_VERSION"; \
-		docker compose up -d; \
-	)
+# up: ## Start the container stack
+# 	$(call load, \
+# 		/bin/bash <<'EOF'
+# 		test -n "$$PHP_VERSION" || { echo-error "PHP_VERSION must be set in .env"; exit 1; }
+# 		test -n "$$HOST_UID" || { echo-error "HOST_UID must be set in .env"; exit 1; }
+# 		test -n "$$HOST_GID" || { echo-error "HOST_GID must be set in .env"; exit 1; }
+
+# 		echo-info "Starting lamp-php-switch with PHP $$PHP_VERSION"
+# 		docker compose up -d
+# 		EOF
+# 	)
 
 down: ## Stop the container stack
 	docker compose down
 
 build-cert: ## Build the init-cert-generator image
-	$(call load, \
-		echo-info "Start building image for initial cert generation"; \
-		docker compose down init-cert-generator; \
-		docker build \
-			$(TAIL_BUILD_LOG) \
-			--pull \
-			--build-arg SSL_BUILD_STAMP=$(SSL_BUILD_STAMP) \
-			--target init-cert-generator \
-			-t init-cert-generator:latest \
-			-f apache/Dockerfile . ; \
-	)
+	$(call load, echo-info "Start building image for initial cert generation")
+	docker compose down init-cert-generator
+	docker build \
+		$$(TAIL_BUILD_LOG) \
+		--pull \
+		--build-arg SSL_BUILD_STAMP=$(SSL_BUILD_STAMP) \
+		--target init-cert-generator \
+		-t init-cert-generator:latest \
+		-f apache/Dockerfile .
 
-build-apache: ## Build the fronting apache image
-	$(call load, \
-		echo-info "Start building image for Apache server"; \
-		docker compose down apache; \
-		docker build \
-			$(TAIL_BUILD_LOG) \
-			--pull \
-			--build-arg SSL_BUILD_STAMP=$(SSL_BUILD_STAMP) \
-			--build-arg PHP_VERSION=$(PHP_VERSION) \
-			--build-arg HOST_UID=$(HOST_UID) \
-			--build-arg HOST_GID=$(HOST_GID) \
-			-t apache:latest \
-			-f apache/Dockerfile . ; \
-	)
 
-build-php: ## Build all php images (PHP-FPM server)
-	$(call load, \
-		for VERSION in $(PHP_VERSIONS); do \
-			echo-info "Start building image for PHP version $$VERSION"; \
-			docker compose down php; \
-			docker build \
-				$(TAIL_BUILD_LOG) \
-				--pull \
-				--build-arg PHP_VERSION=$$VERSION \
-				--build-arg HOST_UID=$(HOST_UID) \
-				--build-arg HOST_GID=$(HOST_GID) \
-				-t php-fpm:$$VERSION \
-				-f php/Dockerfile . ; \
-		done; \
-	)
+# build-apache: ## Build the fronting apache image
+# 	$(call load, \
+# 		/bin/bash <<'EOF'
+# 		echo-info "Start building image for Apache server"
+# 		docker compose down apache
+# 		docker build \
+# 			$(TAIL_BUILD_LOG) \
+# 			--pull \
+# 			--build-arg SSL_BUILD_STAMP=$(SSL_BUILD_STAMP) \
+# 			--build-arg PHP_VERSION=$(PHP_VERSION) \
+# 			--build-arg HOST_UID=$(HOST_UID) \
+# 			--build-arg HOST_GID=$(HOST_GID) \
+# 			-t apache:latest \
+# 			-f apache/Dockerfile .
+# 		EOF
+# 	)
 
-build-single-php: ## Build a specific php image (PHP-FPM server) only
-	$(call load, \
-		if [ "$(origin PHP_VERSION)" != "command line" ]; then \
-			echo-error "Pass PHP_VERSION on command line"; \
-			echo-info "Example: make build-single-php PHP_VERSION=8.4"; \
-			exit 1; \
-		fi; \
-		\
-		if [ -z "$(filter $(PHP_VERSION), $(PHP_VERSIONS))" ]; then \
-			echo-error "Invalid PHP version $(PHP_VERSION)"; \
-			echo-info "Available PHP_VERSIONS: $(PHP_VERSIONS)"; \
-			exit 1; \
-		fi; \
-		echo-info "Building image for PHP version $(PHP_VERSION)"; \
-		docker compose down php; \
-		docker build \
-			$(TAIL_BUILD_LOG) \
-			--pull \
-			--build-arg PHP_VERSION=$(PHP_VERSION) \
-			--build-arg HOST_UID=$(HOST_UID) \
-			--build-arg HOST_GID=$(HOST_GID) \
-			-t php-fpm:$(PHP_VERSION) \
-			-f php/Dockerfile . ; \
-	)
+# build-php: ## Build all php images (PHP-FPM server)
+# 	$(call load, \
+# 		/bin/bash <<'EOF'
+# 		for VERSION in $(PHP_VERSIONS); do
+# 			echo-info "Start building image for PHP version $$VERSION"
+# 			docker compose down php
+# 			docker build \
+# 				$(TAIL_BUILD_LOG) \
+# 				--pull \
+# 				--build-arg PHP_VERSION=$$VERSION \
+# 				--build-arg HOST_UID=$(HOST_UID) \
+# 				--build-arg HOST_GID=$(HOST_GID) \
+# 				-t php-fpm:$$VERSION \
+# 				-f php/Dockerfile .
+# 		done
+# 		EOF
+# 	)
 
-logs: ## Tail logs
-	docker compose logs -f
+# build-single-php: ## Build a specific php image (PHP-FPM server) only
+# 	$(call load, \
+# 		/bin/bash <<'EOF'
+# 		if [ "$(origin PHP_VERSION)" != "command line" ]; then
+# 			echo-error "Pass PHP_VERSION on command line"
+# 			echo-info "Example: make build-single-php PHP_VERSION=8.4"
+# 			exit 1
+# 		fi;
 
-cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
-	$(call load, \
-		[ -f $(SSL_ROOT_CA_CERT) ] || { echo-error "Root CA certificate not found: $(SSL_ROOT_CA_CERT)"; exit 1; }; \
-		sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./apache/ssl/certs/lamp.localhost-rootCA.crt; \
-	)
+# 		if [ -z "$(filter $(PHP_VERSION), $(PHP_VERSIONS))" ]; then
+# 			echo-error "Invalid PHP version $(PHP_VERSION)"
+# 			echo-info "Available PHP_VERSIONS: $(PHP_VERSIONS)"
+# 			exit 1
+# 		fi
 
-cert-import-linux: ## Import the Root CA certificate into the Linux system trust store
-	$(call load, \
-		[ -f $(SSL_ROOT_CA_CERT) ] || { echo-error "Root CA certificate not found: $(SSL_ROOT_CA_CERT)"; exit 1; }; \
-		sudo cp $(SSL_ROOT_CA_CERT) /usr/local/share/ca-certificates/; \
-		sudo update-ca-certificates; \
-	)
+# 		echo-info "Building image for PHP version $(PHP_VERSION)"
+# 		docker compose down php
+# 		docker build \
+# 			$(TAIL_BUILD_LOG) \
+# 			--pull \
+# 			--build-arg PHP_VERSION=$(PHP_VERSION) \
+# 			--build-arg HOST_UID=$(HOST_UID) \
+# 			--build-arg HOST_GID=$(HOST_GID) \
+# 			-t php-fpm:$(PHP_VERSION) \
+# 			-f php/Dockerfile .
+# 		EOF
+# 	)
 
-cert-import-windows: ## Not implemented
-	$(call load, \
-		echo-error "Not implemented."; \
-		exit 1; \
-	)
+
+# logs: ## Tail logs
+# 	docker compose logs -f
+
+# cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
+# 	$(call load, \
+# 		/bin/bash <<'EOF'
+# 		[ -f $(SSL_ROOT_CA_CERT) ] || { echo-error "Root CA certificate not found: $(SSL_ROOT_CA_CERT)"; exit 1; }
+# 		sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./apache/ssl/certs/lamp.localhost-rootCA.crt
+# 		EOF
+# 	)
+
+# cert-import-linux: ## Import the Root CA certificate into the Linux system trust store
+# 	$(call load, \
+# 		/bin/bash <<'EOF'
+# 		[ -f $(SSL_ROOT_CA_CERT) ] || { echo-error "Root CA certificate not found: $(SSL_ROOT_CA_CERT)"; exit 1; }
+# 		[ -f /etc/os-release ] || { echo "No os-release standard file found."; exit 1; }
+
+# 		if grep -qiE "ubuntu|debian|suse" /etc/os-release; then
+# 			echo "Debian/Ubuntu/SuSE ecosystem detected."
+
+# 			if [ -d /etc/pki/trust/anchors ]; then
+# 				sudo cp $(SSL_ROOT_CA_CERT) /etc/pki/trust/anchors/
+# 			else
+# 				sudo cp $(SSL_ROOT_CA_CERT) /usr/local/share/ca-certificates/
+# 			fi
+
+# 			sudo update-ca-certificates
+# 		elif grep -qiE "rhel|centos|fedora|rocky|alma" /etc/os-release; then
+# 			echo "RedHat/Fedora ecosystem detected."
+# 			sudo cp $(SSL_ROOT_CA_CERT) /etc/pki/ca-trust/source/anchors/
+# 			sudo update-ca-trust
+# 		else
+# 			echo "Unsupported Linux distribution."
+# 			exit 1
+# 		fi
+# 		EOF
+# 	)
+
+# cert-import-windows: ## Not implemented
+# 	$(call load, \
+# 		/bin/bash <<'EOF'
+# 		echo-error "Not implemented."
+
+# 		exit 1
+# 		EOF
+# 	)
