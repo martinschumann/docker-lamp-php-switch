@@ -43,20 +43,20 @@ help: ## Display this help
 build: down build-cert build-apache build-php ## Build all necessary images
 
 up: ## Start the container stack
-	source scripts/messaging-lib.sh; \
 	if [ -z "$${PHP_VERSION:-}" ]; then \
+		source scripts/messaging-lib.sh; \
 		echo_error "PHP_VERSION must be set in .env"; \
 		exit 1; \
 	fi
 
-	source scripts/messaging-lib.sh; \
 	if [ -z "$${HOST_UID:-}" ]; then \
+		source scripts/messaging-lib.sh; \
 		echo_error "HOST_UID must be set in .env"; \
 		exit 1; \
 	fi
 
-	source scripts/messaging-lib.sh; \
 	if [ -z "$${HOST_GID:-}" ]; then \
+		source scripts/messaging-lib.sh; \
 		echo_error "HOST_GID must be set in .env"; \
 		exit 1; \
 	fi
@@ -98,8 +98,8 @@ build-apache: ## Build the fronting apache image
 		-f apache/Dockerfile .
 
 build-php: ## Build all php images (PHP-FPM server)
-	source scripts/messaging-lib.sh; \
 	for VERSION in $(PHP_VERSIONS); do \
+		source scripts/messaging-lib.sh; \
 		echo_info "Start building image for PHP version $$VERSION"; \
 		docker compose down php; \
 		BUILD_LOG=$(TAIL_BUILD_LOG); \
@@ -114,15 +114,15 @@ build-php: ## Build all php images (PHP-FPM server)
 	done
 
 build-single-php: ## Build a specific php image (PHP-FPM server) only
-	source scripts/messaging-lib.sh; \
 	if [ "$(origin PHP_VERSION)" != "command line" ]; then \
+		source scripts/messaging-lib.sh; \
 		echo_error "Pass PHP_VERSION on command line"; \
 		echo_info "Example: make build-single-php PHP_VERSION=8.4"; \
 		exit 1; \
 	fi
 
-	source scripts/messaging-lib.sh; \
 	if [ -z "$(filter $(PHP_VERSION), $(PHP_VERSIONS))" ]; then \
+		source scripts/messaging-lib.sh; \
 		echo_error "Invalid PHP version $(PHP_VERSION)"; \
 		echo_info "Available PHP_VERSIONS: $(PHP_VERSIONS)"; \
 		exit 1; \
@@ -145,9 +145,8 @@ logs: ## Tail logs
 	docker compose logs -f
 
 cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
-	source scripts/messaging-lib.sh; \
-
 	if [ ! -f "$(SSL_ROOT_CA_CERT)" ]; then \
+		source scripts/messaging-lib.sh; \
 		echo_error "Root CA certificate not found: $(SSL_ROOT_CA_CERT)"; \
 		exit 1; \
 	fi
@@ -155,23 +154,20 @@ cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 	sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$(SSL_ROOT_CA_CERT)"
 
 cert-import-linux: ## Import the Root CA certificate into the Linux system trust store
-	source scripts/messaging-lib.sh; \
-
 	if [ ! -f "$(SSL_ROOT_CA_CERT)" ]; then \
+		source scripts/messaging-lib.sh; \
 		echo_error "Root CA certificate not found: $(SSL_ROOT_CA_CERT)"; \
 		exit 1; \
 	fi
 
-	source scripts/messaging-lib.sh; \
-
 	if [ ! -f /etc/os-release ]; then \
+		source scripts/messaging-lib.sh; \
 		echo_error "No os-release standard file found."; \
 		exit 1; \
 	fi
 
-	source scripts/messaging-lib.sh; \
-
 	if grep -qiE "ubuntu|debian|suse" /etc/os-release; then \
+		source scripts/messaging-lib.sh; \
 		echo_info "Debian/Ubuntu/SuSE ecosystem detected."; \
 		# \
 		if [ -d /etc/pki/trust/anchors ]; then \
@@ -182,10 +178,12 @@ cert-import-linux: ## Import the Root CA certificate into the Linux system trust
 		# \
 		sudo update-ca-certificates; \
 	elif grep -qiE "rhel|centos|fedora|rocky|alma" /etc/os-release; then \
+		source scripts/messaging-lib.sh; \
 		echo_info "RedHat/Fedora ecosystem detected."; \
 		sudo cp "$(SSL_ROOT_CA_CERT)" /etc/pki/ca-trust/source/anchors/; \
 		sudo update-ca-trust; \
 	else \
+		source scripts/messaging-lib.sh; \
 		echo_error "Unsupported Linux distribution."; \
 		exit 1; \
 	fi
