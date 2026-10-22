@@ -1,0 +1,126 @@
+name: lamp-php-switch
+
+networks:
+  internal-net:
+    name: internal-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.1.0/24
+
+volumes:
+  mysql-data:
+  postgres-data:
+  mariadb-sockets-dir:
+  fpm-sockets-dir:
+
+services:
+  pki:
+    image: pki:latest
+    build:
+      context: .
+      dockerfile: ./pki/Dockerfile
+      args:
+        PKI_DIR: ${PKI_DIR}
+        ROOT_CA_CONF_FILE: ${ROOT_CA_CONF_FILE}
+        ROOT_CA_KEY_FILE: ${ROOT_CA_KEY_FILE}
+        ROOT_CA_CERT_FILE: ${ROOT_CA_CERT_FILE}
+        CONF_FILE: ${CONF_FILE}
+        CSR_FILE: ${CSR_FILE}
+        KEY_FILE: ${KEY_FILE}
+        CERT_FILE: ${CERT_FILE}
+        RENEW_SSL_CA: ${RENEW_SSL_CA:-0}
+        RENEW_SSL_CERT: ${RENEW_SSL_CERT:-0}
+
+  apache:
+    build: 
+      context: .
+      additional_contexts:
+        ssl-certs: service:pki
+      dockerfile: ./apache/Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.4}
+        PKI_DIR: ${PKI_DIR}
+        ROOT_CA_CONF_FILE: ${ROOT_CA_CONF_FILE}
+        ROOT_CA_KEY_FILE: ${ROOT_CA_KEY_FILE}
+        ROOT_CA_CERT_FILE: ${ROOT_CA_CERT_FILE}
+        CONF_FILE: ${CONF_FILE}
+        CSR_FILE: ${CSR_FILE}
+        KEY_FILE: ${KEY_FILE}
+        CERT_FILE: ${CERT_FILE}
+        RENEW_SSL_CA: ${RENEW_SSL_CA:-0}
+        RENEW_SSL_CERT: ${RENEW_SSL_CERT:-0}
+        APACHE_SSL_DIR: ${APACHE_SSL_DIR:-/etc/apache2/ssl}
+    image: apache:latest
+    container_name: apache
+    hostname: apache
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.10
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Shared by Apache and FPM
+      - { type: bind,   source: ./vhosts,        target: /srv/apache2/vhosts }
+      - { type: volume, source: fpm-sockets-dir, target: /run/php }
+
+      # Config files editable on the host and monitored by watchmedo
+      - { type: bind, source: ./vhosts-configs, target: /etc/apache2/fpm-sites }
+      # Certs available on host
+      - { type: bind, source: ./pki/ssl/certs, target: /etc/apache2/ssl }
+
+  php:
+    build: 
+      context: .
+      dockerfile: ./php/Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.4}
+        HOST_UID: ${HOST_UID}
+        HOST_GID: ${HOST_GID}
+    image: php-fpm:${PHP_VERSION:-8.4}
+    depends_on:
+      mariadb:
+        condition: service_started
+    container_name: php-fpm-${PHP_VERSION:-8.4}
+    hostname: php-fpm-${PHP_VERSION:-8.4}
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.11
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    volumes:
+      # Shell login ubuntu
+      - { type: bind, source: ./shell/ubuntu/.bashrc.d, target: /home/ubuntu/.bashrc.d/ }
+      - { type: bind, source: ./shell/ubuntu/files,     target: /home/ubuntu/.host-data }
+      - { type: bind, source: ./shell/ubuntu/.mysql,    target: /home/ubuntu/.mysql }
+      - { type: bind, source: ./shell/ubuntu/.ssh,      target: /home/ubuntu/.ssh }
+
+      # Shared by Apache and FPM
+      - { type: bind,   source: ./vhosts,        target: /srv/apache2/vhosts/ }
+      - { type: volume, source: fpm-sockets-dir, target: /run/php/ }
+
+      # MariaDB via socket
+      - { type: volume, source: mariadb-sockets-dir, target: /run/mysqld/ }
+
+  mariadb:
+    container_name: mariadb
+    hostname: mariadb
+    image: mariadb:lts
+    command: ["--ssl=0"]
+    ports:
+      - "3306:3306"
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.12
+    environment:
+      - MYSQL_ROOT_PASSWORD
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - { type: volume, source: mysql-data,          target: /var/lib/mysql/ }
+      - { type: volume, source: mariadb-sockets-dir, target: /run/mysqld/ }
+

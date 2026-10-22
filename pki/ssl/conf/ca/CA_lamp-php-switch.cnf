@@ -1,0 +1,52 @@
+# [ ca ]
+# default_ca = CA_lamp_php_switch
+# 
+# [ CA_lamp_php_switch ]
+# dir = /opt/pki
+# certs = $dir/certs
+# default_md = sha256
+# name_opt = ca_default
+# cert_opt = ca_default
+# default_days = 825
+# preserve = no
+# policy = policy_loose
+
+[ req ]
+new_key            = ec:prime256v1
+default_md         = sha256
+default_days       = 3650
+prompt             = no
+encrypt_key        = no
+distinguished_name = req_distinguished_name
+
+[ req_distinguished_name ]
+C  = DE
+ST = Hamburg
+L  = Hamburg
+O  = lamp-php-switch
+OU = IT
+CN = CA lamp-php-switch
+
+# [ policy_loose ]
+# countryName = optional
+# stateOrProvinceName = optional
+# localityName = optional
+# organizationName = optional
+# organizationalUnitName  = optional
+# commonName = supplied
+# emailAddress = optional
+
+[ v3_ca ]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer
+basicConstraints = critical, CA:TRUE
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+# [ server_cert ]
+# basicConstraints = CA:FALSE
+# nsCertType = server
+# nsComment = "OpenSSL Generated Server Certificate"
+# subjectKeyIdentifier=hash
+# authorityKeyIdentifier=keyid,issuer
+# keyUsage = critical, digitalSignature, keyEncipherment
+# extendedKeyUsage = serverAuth
