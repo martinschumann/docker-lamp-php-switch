@@ -19,6 +19,8 @@ ifneq ($(wildcard .env),)
     include .env
 endif
 
+SSL_ROOT_CA_CERT = ./pki/ssl/certs/root-ca-lamp-php-switch.crt
+
 define BASH_LIB
 echo_info()    { echo -e "\033[1;34m[INFO]\033[0m    $$*"; }; \
 echo_success() { echo -e "\033[1;32m[SUCCESS]\033[0m $$*"; }; \
@@ -36,9 +38,21 @@ help: ## Display this help
 	echo "Avalailabe targets:"
 	grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(ESC)[36m%-25s\033[0m %s\n", $$1, $$2}' | grep -E -v 'build-ssl-cert|build-apache|build-php'
 
+build: ## Build the container stack
+	$(BASH_LIB) echo_info "Start building lamp-php-switch";
+	docker compose build pki apache --no-cache
+
+	for VERSION in $(PHP_VERSIONS); do \
+		$(BASH_LIB) echo_info "Building image for PHP version $$VERSION"; \
+		PHP_VERSION=$$VERSION docker compose build php --no-cache; \
+	done
+
 up: ## Start the container stack
-	$(BASH_LIB) echo_info "Starting lamp-php-switch with PHP $(PHP_VERSION)";
-	docker compose up apache php mariadb -d  --no-build --remove-orphans
+	if [ "$(CHAINED)" != "1" ]; then \
+		$(BASH_LIB) echo_info "Starting lamp-php-switch with PHP $(PHP_VERSION)"; \
+	fi
+
+	docker compose up apache php mariadb -d --no-build --remove-orphans
 
 down: ## Stop the container stack
 	$(BASH_LIB) echo_info "Stopping lamp-php-switch with PHP $(PHP_VERSION)";
