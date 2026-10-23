@@ -40,12 +40,16 @@ help: ## Display this help
 
 build: ## Build the container stack
 	$(BASH_LIB) echo_info "Start building lamp-php-switch";
-	docker compose build pki apache --no-cache
+	docker compose build pki apache
 
 	for VERSION in $(PHP_VERSIONS); do \
 		$(BASH_LIB) echo_info "Building image for PHP version $$VERSION"; \
 		PHP_VERSION=$$VERSION docker compose build php --no-cache; \
 	done
+
+generate-ca-cert: ## Build the PKI image and generate a Root CA certificate
+	$(BASH_LIB) echo_info "Start building pki image";
+	docker compose build pki apache --no-cache
 
 up: ## Start the container stack
 	if [ "$(CHAINED)" != "1" ]; then \
