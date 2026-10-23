@@ -33,7 +33,8 @@ services:
         RENEW_SSL_CERT: ${RENEW_SSL_CERT:-0}
 
   apache:
-    build: 
+    image: apache:latest
+    build:
       context: .
       additional_contexts:
         ssl-certs: service:pki
@@ -51,7 +52,6 @@ services:
         RENEW_SSL_CA: ${RENEW_SSL_CA:-0}
         RENEW_SSL_CERT: ${RENEW_SSL_CERT:-0}
         APACHE_SSL_DIR: ${APACHE_SSL_DIR:-/etc/apache2/ssl}
-    image: apache:latest
     container_name: apache
     hostname: apache
     networks:
