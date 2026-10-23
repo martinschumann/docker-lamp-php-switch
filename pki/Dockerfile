@@ -68,4 +68,3 @@ COPY --chmod=755 ./scripts/generate-certificate.sh $PKI_BIN_DIR
 
 RUN $PKI_BIN_DIR/generate-root-ca-certificate.sh
 RUN $PKI_BIN_DIR/generate-certificate.sh
-

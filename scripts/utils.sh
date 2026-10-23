@@ -60,19 +60,28 @@ assert_files() {
 export -f assert_files
 
 get_key_checksum() {
-    openssl pkey -pubout -in "$1" 2>/dev/null | openssl sha256 | awk '{print $NF}';
+    if [ $# -eq 0 ]; then
+        return 1
+    fi
+
+    openssl pkey -pubout -in "$1" 2>/dev/null | openssl sha256 | awk '{print $NF}' | tr -d '\r\n';
 }
 export -f get_key_checksum
 
 get_csr_checksum() {
-    openssl req -pubkey -noout -in "$1" 2>/dev/null | openssl sha256 | awk '{print $NF}';
+    if [ $# -eq 0 ]; then
+        return 1
+    fi
+
+    openssl req -pubkey -noout -in "$1" 2>/dev/null | openssl sha256 | awk '{print $NF}' | tr -d '\r\n';
 }
 export -f get_csr_checksum
 
 get_cert_checksum() {
-    openssl x509 -pubkey -noout -in "$1" 2>/dev/null | openssl sha256 | awk '{print $NF}';
+    if [ $# -eq 0 ]; then
+        return 1
+    fi
+
+    openssl x509 -pubkey -noout -in "$1" 2>/dev/null | openssl sha256 | awk '{print $NF}' | tr -d '\r\n';
 }
 export -f get_cert_checksum
-
-
-
