@@ -14,12 +14,14 @@ ENV PHP_VERSION=${PHP_VERSION}
 ENV HOST_UID=${HOST_UID}
 ENV HOST_GID=${HOST_GID}
 
-# Install packages from file
-RUN rm -rf /root/packages
-COPY ./php/packages /root/packages
+# Install packages
+COPY ./php/packages.d /root/packages.d
 RUN set -euo pipefail && \
+    compgen -G "/root/packages.d/*.pkgs" > /dev/null && \
     apt-get update && \
-    xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < /root/packages && \
+    for file in /root/packages.d/*.pkgs; do \
+        xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < "$file"; \
+    done && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Add repository ppa:ondrej/php

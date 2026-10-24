@@ -2,6 +2,7 @@ bash
 ca-certificates
 composer
 curl
+dnsutils
 git
 gosu
 htop
