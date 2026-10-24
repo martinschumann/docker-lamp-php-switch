@@ -48,6 +48,8 @@ services:
         KEY_FILE: ${KEY_FILE}
         CERT_FILE: ${CERT_FILE}
         APACHE_SSL_DIR: ${APACHE_SSL_DIR:-/etc/apache2/ssl}
+    environment:
+      - PHP_VERSION=${PHP_VERSION:-8.4}
     container_name: apache
     hostname: apache
     networks:
