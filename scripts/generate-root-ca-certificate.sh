@@ -6,8 +6,7 @@ source /opt/pki/bin/utils.sh
 assert_envs PKI_DIR \
             ROOT_CA_CONF_FILE_PATH \
             ROOT_CA_KEY_FILE_PATH \
-            ROOT_CA_CERT_FILE_PATH \
-            RENEW_SSL_CA
+            ROOT_CA_CERT_FILE_PATH
 
 assert_files "$ROOT_CA_CONF_FILE_PATH"
 

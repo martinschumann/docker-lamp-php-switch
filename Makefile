@@ -47,10 +47,6 @@ build: ## Build the container stack
 		PHP_VERSION=$$VERSION docker compose build php --no-cache; \
 	done
 
-generate-ca-cert: ## Build the PKI image and generate a Root CA certificate
-	$(BASH_LIB) echo_info "Start building pki image";
-	docker compose build pki apache --no-cache
-
 up: ## Start the container stack
 	if [ "$(CHAINED)" != "1" ]; then \
 		$(BASH_LIB) echo_info "Starting lamp-php-switch with PHP $(PHP_VERSION)"; \
@@ -64,6 +60,10 @@ down: ## Stop the container stack
 
 logs: ## Tail logs
 	docker compose logs -f
+
+generate-ca-cert: ## Build the PKI image and generate a Root CA certificate
+	$(BASH_LIB) echo_info "Start building pki image";
+	docker compose build pki apache --no-cache
 
 cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 	$(BASH_LIB) echo_info "Ensuring that container stack is running and certificates are present."

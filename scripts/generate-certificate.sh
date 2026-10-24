@@ -8,9 +8,7 @@ assert_envs ROOT_CA_KEY_FILE_PATH \
             CSR_FILE_PATH \
             CONF_FILE_PATH \
             KEY_FILE_PATH \
-            CERT_FILE_PATH \
-            RENEW_SSL_CA \
-            RENEW_SSL_CERT
+            CERT_FILE_PATH
 
 assert_files "$ROOT_CA_KEY_FILE_PATH" \
              "$ROOT_CA_CERT_FILE_PATH"

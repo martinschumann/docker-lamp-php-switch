@@ -13,9 +13,7 @@ ARG PKI_DIR \
     CONF_FILE \
     CSR_FILE \
     KEY_FILE \
-    CERT_FILE \
-    RENEW_SSL_CA \
-    RENEW_SSL_CERT
+    CERT_FILE
 
 ARG PKI_BIN_DIR=$PKI_DIR/bin
 ARG CONF_FILE_PATH=${PKI_DIR}/conf/${CONF_FILE}
@@ -31,9 +29,7 @@ RUN : "${PKI_DIR:?}" \
       "${CONF_FILE:?}" \
       "${CSR_FILE:?}" \
       "${KEY_FILE:?}" \
-      "${CERT_FILE:?}" \
-      "${RENEW_SSL_CA:?}" \
-      "${RENEW_SSL_CERT:?}"
+      "${CERT_FILE:?}"
 
 # Install OpenSSL
 RUN apt-get update && \
@@ -56,9 +52,7 @@ ENV PKI_DIR=$PKI_DIR \
     ROOT_CA_CERT_FILE_PATH=${ROOT_CA_CERT_FILE_PATH} \
     CSR_FILE_PATH="${PKI_DIR}/csr/${CSR_FILE}" \
     KEY_FILE_PATH="${PKI_DIR}/private/${KEY_FILE}" \
-    CERT_FILE_PATH="${PKI_DIR}/certs/${CERT_FILE}" \
-    RENEW_SSL_CA=${RENEW_SSL_CA} \
-    RENEW_SSL_CERT=${RENEW_SSL_CERT}
+    CERT_FILE_PATH="${PKI_DIR}/certs/${CERT_FILE}"
 
 COPY ./pki/ssl/conf/ca/$ROOT_CA_CONF_FILE $ROOT_CA_CONF_FILE_PATH
 COPY --chmod=755 ./scripts/generate-root-ca-certificate.sh $PKI_BIN_DIR

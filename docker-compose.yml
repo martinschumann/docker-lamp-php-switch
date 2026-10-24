@@ -29,8 +29,6 @@ services:
         CSR_FILE: ${CSR_FILE}
         KEY_FILE: ${KEY_FILE}
         CERT_FILE: ${CERT_FILE}
-        RENEW_SSL_CA: ${RENEW_SSL_CA:-0}
-        RENEW_SSL_CERT: ${RENEW_SSL_CERT:-0}
 
   apache:
     image: apache:latest
@@ -49,8 +47,6 @@ services:
         CSR_FILE: ${CSR_FILE}
         KEY_FILE: ${KEY_FILE}
         CERT_FILE: ${CERT_FILE}
-        RENEW_SSL_CA: ${RENEW_SSL_CA:-0}
-        RENEW_SSL_CERT: ${RENEW_SSL_CERT:-0}
         APACHE_SSL_DIR: ${APACHE_SSL_DIR:-/etc/apache2/ssl}
     container_name: apache
     hostname: apache

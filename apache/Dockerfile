@@ -16,8 +16,6 @@ ARG SERVERNAME=apache \
     CSR_FILE \
     KEY_FILE \
     CERT_FILE \
-    RENEW_SSL_CA \
-    RENEW_SSL_CERT \
     APACHE_SSL_DIR
 
 # Validate
@@ -30,8 +28,6 @@ RUN : "${PHP_VERSION:?}" \
       "${CSR_FILE:?}" \
       "${KEY_FILE:?}" \
       "${CERT_FILE:?}" \
-      "${RENEW_SSL_CA:?}" \
-      "${RENEW_SSL_CERT:?}" \
       "${APACHE_SSL_DIR:?}"
 
 ENV PHP_VERSION=$PHP_VERSION \
