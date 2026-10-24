@@ -35,7 +35,7 @@ PHP_VERSIONS := 8.2 8.3 8.4 8.5
 
 help: ## Display this help
 	$(info $(BANNER))
-	echo "Avalailabe targets:"
+	echo "Available targets:"
 	grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(ESC)[36m%-25s\033[0m %s\n", $$1, $$2}' | grep -E -v 'build-ssl-cert|build-apache|build-php'
 
 build: ## Build the container stack
@@ -77,7 +77,7 @@ cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 	$(BASH_LIB) echo_info "Calling system keychain."
 	sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$(SSL_ROOT_CA_CERT)"
 
-cert-import-linux: up ## Import the Root CA certificate into the Linux system trust store
+cert-import-linux: ## Import the Root CA certificate into the Linux system trust store
 	$(BASH_LIB) echo_info "Ensuring that container stack is running and certificates are present."
 	$(MAKE) up CHAINED=1
 
