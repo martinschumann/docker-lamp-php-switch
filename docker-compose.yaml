@@ -16,7 +16,7 @@ volumes:
 
 services:
   pki:
-    image: pki:latest
+    image: martinschumann/docker-lamp-php-switch-pki:latest
     build:
       context: .
       dockerfile: ./pki/Dockerfile
