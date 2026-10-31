@@ -1,0 +1,17 @@
+bash
+ca-certificates
+composer
+curl
+dnsutils
+git
+gosu
+htop
+iputils-ping
+make
+mariadb-client
+socat
+ssh
+sudo
+unzip
+vim
+zip
