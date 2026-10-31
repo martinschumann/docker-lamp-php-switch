@@ -1,0 +1,77 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  
+  pull_request:
+    branches: [ "dev", "main" ]
+
+env:
+  PHP_VERSION: 8.4
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create temporary .env file
+      run: |
+        cp .env-example .env
+        echo "HOST_UID=$(id -u)" >> .env
+        echo "HOST_GID=$(id -g)" >> .env
+
+    - name: Build and start compose stack
+      run: |
+        docker compose up -d --build
+
+    - name: Configure local DNS routing
+      run: echo "127.0.0.1 examplehost.lamp.localhost" | sudo tee -a /etc/hosts
+
+    - name: Install Root CA certificate
+      run: make cert-import-linux
+
+    - name: Test HTTP response
+      run: |
+        set +e
+        curl -sS -f -D - http://localhost:80/ | egrep "Apache2 Ubuntu Default Page" > /dev/null
+        PIPE_RTS=("${PIPESTATUS[@]}")
+
+        CURL_EXIT=${PIPE_RTS[0]}
+        GREP_EXIT=${PIPE_RTS[1]}
+
+        if [ $CURL_EXIT -ne 0 ]; then
+          echo "[FAIL] Connection failed. (curl exit code: $CURL_EXIT)"
+          exit 1
+        fi
+        
+        if [ $GREP_EXIT -ne 0 ]; then
+          echo "[FAIL] Expected content not found. (grep exit code: $GREP_EXIT)"
+          exit 1
+        fi
+
+    - name: Test HTTPS response
+      run: |
+        set +e
+        curl -sS -f -D - https://examplehost.lamp.localhost:443/ | egrep "www.php.net" > /dev/null
+        PIPE_RTS=("${PIPESTATUS[@]}")
+
+        CURL_EXIT=${PIPE_RTS[0]}
+        GREP_EXIT=${PIPE_RTS[1]}
+
+        if [ $CURL_EXIT -ne 0 ]; then
+          echo "[FAIL] Connection failed. (curl exit code: $CURL_EXIT)"
+          exit 1
+        fi
+
+        if [ $GREP_EXIT -ne 0 ]; then
+          echo "[FAIL] Expected content not found. (grep exit code: $GREP_EXIT)"
+          exit 1
+        fi
+
+    - name: Shutdown LAMP Stack
+      if: always()
+      run: make down
