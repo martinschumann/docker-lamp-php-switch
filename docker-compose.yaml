@@ -29,6 +29,8 @@ services:
       dockerfile: ./apache/Dockerfile
       args:
         PHP_VERSION: ${PHP_VERSION:-8.4}
+      additional_contexts:
+        ssl-certs: martinschumann/docker-lamp-php-switch-pki:latest
     environment:
       PHP_VERSION: ${PHP_VERSION:-8.4}
       RENEW_SSL_CA: ${RENEW_SSL_CA:-0}
