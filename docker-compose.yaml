@@ -1,0 +1,101 @@
+name: lamp-php-switch
+
+networks:
+  internal-net:
+    name: internal-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.1.0/24
+
+volumes:
+  mysql-data:
+  postgres-data:
+  mariadb-sockets-dir:
+  fpm-sockets-dir:
+
+services:
+  pki:
+    image: pki:latest
+    build:
+      context: .
+      dockerfile: ./pki/Dockerfile
+    scale: 0
+
+  apache:
+    image: martinschumann/docker-lamp-php-switch-apache:latest
+    build:
+      context: .
+      dockerfile: ./apache/Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.4}
+    environment:
+      PHP_VERSION: ${PHP_VERSION:-8.4}
+      RENEW_SSL_CA: ${RENEW_SSL_CA:-0}
+    container_name: apache
+    hostname: apache
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.10
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Bind Mounts
+      - ./pki/ca:/docker/ca
+      - ./vhosts:/srv/apache2/vhosts
+      - ./vhosts-configs:/etc/apache2/php-fpm-sites
+      # Named volumes
+      - fpm-sockets-dir:/run/php
+
+  php-fpm:
+    image: martinschumann/docker-lamp-php-switch-php-fpm:${PHP_VERSION:-8.4}
+    build: 
+      context: .
+      dockerfile: ./php-fpm/Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.4}
+        HOST_UID: ${HOST_UID:-1000}
+        HOST_GID: ${HOST_GID:-1000}
+    depends_on:
+      mariadb:
+        condition: service_started
+    container_name: php-fpm-${PHP_VERSION:-8.4}
+    hostname: php-fpm-${PHP_VERSION:-8.4}
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.11
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    volumes:
+      # Bind mounts
+      - ./shell/ubuntu/.bashrc.d:/home/ubuntu/.bashrc.d
+      - ./shell/ubuntu/files:/home/ubuntu/.host-data
+      - ./shell/ubuntu/.mysql:/home/ubuntu/.mysql
+      - ./shell/ubuntu/.ssh:/home/ubuntu/.ssh
+      - ./vhosts:/srv/apache2/vhosts
+      # Named volumes
+      - fpm-sockets-dir:/run/php
+      - mariadb-sockets-dir:/run/mysqld
+
+  mariadb:
+    container_name: mariadb
+    hostname: mariadb
+    image: mariadb:lts
+    command: ["--ssl=0"]
+    ports:
+      - "3306:3306"
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.12
+    environment:
+      - MYSQL_ROOT_PASSWORD
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      # Named volumes
+      - mysql-data:/var/lib/mysql
+      - mariadb-sockets-dir:/run/mysqld
