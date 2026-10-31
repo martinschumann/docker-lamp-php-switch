@@ -80,7 +80,8 @@ cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 	sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$(ROOT_CA_CERT)"
 
 cert-import-linux: ## Import the Root CA certificate into the Linux system trust store
-	$(BASH_LIB) echo_info "Ensuring that container stack is running and certificates are present."
+	$(BASH_LIB) echo_info "Restarting the service apache"
+	docker compose down apache
 	$(MAKE) up CHAINED=1
 
 	if [ ! -f "$(ROOT_CA_CERT)" ]; then \
