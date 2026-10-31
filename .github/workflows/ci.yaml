@@ -20,7 +20,7 @@ jobs:
 
     - name: Create temporary .env file
       run: |
-        cp .env-example .env
+        cp .env.example .env
         echo "HOST_UID=$(id -u)" >> .env
         echo "HOST_GID=$(id -g)" >> .env
 
