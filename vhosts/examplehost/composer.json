@@ -1,0 +1,12 @@
+{
+    "name": "lamp-php-switch/examplehost",
+    "version": "1.0.0",
+    "require": {
+        "php": ">=8.2 <8.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}

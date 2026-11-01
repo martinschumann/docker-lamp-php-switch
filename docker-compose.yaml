@@ -16,7 +16,7 @@ volumes:
 
 services:
   pki:
-    image: pki:latest
+    image: martinschumann/docker-lamp-php-switch-pki:latest
     build:
       context: .
       dockerfile: ./pki/Dockerfile
@@ -29,6 +29,8 @@ services:
       dockerfile: ./apache/Dockerfile
       args:
         PHP_VERSION: ${PHP_VERSION:-8.4}
+      additional_contexts:
+        pki: service:pki
     environment:
       PHP_VERSION: ${PHP_VERSION:-8.4}
       RENEW_SSL_CA: ${RENEW_SSL_CA:-0}
