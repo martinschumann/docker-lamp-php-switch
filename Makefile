@@ -52,7 +52,7 @@ up: ## Start the container stack
 		$(BASH_LIB) echo_info "Starting lamp-php-switch with PHP $(PHP_VERSION)"; \
 	fi
 
-	docker compose up -d --no-build --remove-orphans
+	docker compose up -d --remove-orphans
 
 down: ## Stop the container stack
 	$(BASH_LIB) echo_info "Stopping lamp-php-switch with PHP $(PHP_VERSION)";
@@ -65,6 +65,10 @@ generate-ca-cert: ## Restart the container and generate a Root-CA certificate at
 	$(BASH_LIB) echo_info "Generate a Root-CA certificate";
 	docker compose down && \
 	RENEW_SSL_CA=1 docker compose up -d
+
+backup-mariadb: ## Not implemented
+	$(BASH_LIB) echo_error "Next target to be added."; \
+	exit 1
 
 cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 	$(BASH_LIB) echo_info "Restarting the container stack"
