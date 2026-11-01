@@ -68,7 +68,6 @@ jobs:
 
         if [ $CURL_EXIT -ne 0 ]; then
           echo "[FAIL] Connection failed. (curl exit code: $CURL_EXIT)"
-          docker compose logs
           exit 1
         fi
 
