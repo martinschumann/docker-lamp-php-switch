@@ -1,7 +1,7 @@
-#########################
+###############################################################
 # apache
-FROM pki:latest AS apache
-#########################
+FROM martinschumann/docker-lamp-php-switch-pki:latest AS apache
+###############################################################
 
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
