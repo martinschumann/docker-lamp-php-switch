@@ -76,6 +76,7 @@ services:
     volumes:
       # Bind mounts
       - ./shell/ubuntu/.bashrc.d:/home/ubuntu/.bashrc.d
+      - ./shell/ubuntu/.config:/home/ubuntu/.config
       - ./shell/ubuntu/files:/home/ubuntu/.host-data
       - ./shell/ubuntu/.mysql:/home/ubuntu/.mysql
       - ./shell/ubuntu/.ssh:/home/ubuntu/.ssh
