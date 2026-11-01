@@ -7,7 +7,7 @@ on:
     branches: [ "main"]
   
   pull_request:
-    branches: [ "dev", "main" ]
+    branches: [ "main" ]
 
 env:
   PHP_VERSION: 8.4
