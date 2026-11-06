@@ -43,8 +43,8 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
     volumes:
       # Bind Mounts
       - ./pki/ca:/docker/ca
@@ -95,7 +95,7 @@ services:
     image: mariadb:lts
     command: ["--ssl=0"]
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     networks:
       internal-net:
         ipv4_address: 172.16.1.12
