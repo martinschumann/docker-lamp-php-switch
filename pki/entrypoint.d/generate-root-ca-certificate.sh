@@ -15,7 +15,8 @@ if [[ ! -f "/docker/ca/.initialized" ]] || [[ "${RENEW_SSL_CA:-0}" -gt 0 ]]; the
     chmod 600 "/opt/pki/root-ca/private/root-ca.lamp-php-switch.key" && \
     openssl req -new \
                 -x509 \
-                -newkey ec:prime256v1 \
+                -days 3650 \
+                -extensions v3_ca \
                 -key "/opt/pki/root-ca/private/root-ca.lamp-php-switch.key" \
                 -config "/opt/pki/root-ca/conf/root-ca.lamp-php-switch.cnf" \
                 -out "/opt/pki/root-ca/certs/root-ca.lamp-php-switch.crt";
