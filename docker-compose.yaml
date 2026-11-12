@@ -115,6 +115,8 @@ services:
       dockerfile: ./postgres/Dockerfile
     environment:
       POSTGRES_PASSWORD_FILE: /run/credentials/postgres_root_pwd
+    ports:
+      - "127.0.0.1:5432:5432"
     networks:
       internal-net:
         ipv4_address: 172.16.1.13
