@@ -7,7 +7,6 @@ gosu
 htop
 iputils-ping
 make
-mariadb-client
 socat
 ssh
 sudo

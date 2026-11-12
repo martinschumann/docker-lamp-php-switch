@@ -4,14 +4,12 @@ networks:
   internal-net:
     name: internal-net
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.16.1.0/24
 
 volumes:
   mariadb-data-dir:
   mariadb-sockets-dir:
   postgres-data-dir:
+  postgres-sockets-dir:
   fpm-sockets-dir:
 
 services:
@@ -37,8 +35,7 @@ services:
     container_name: apache
     hostname: apache
     networks:
-      internal-net:
-        ipv4_address: 172.16.1.10
+      - internal-net
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -66,18 +63,15 @@ services:
       PHP_VERSION: ${PHP_VERSION:-8.4}
       HOST_UID: ${HOST_UID:-1000}
       HOST_GID: ${HOST_GID:-1000}
-      MARIADB_ROOT_PASSWORD_FILE: /run/credentials/mariadb_root_pwd
     container_name: php-fpm-${PHP_VERSION:-8.4}
     hostname: php-fpm-${PHP_VERSION:-8.4}
     networks:
-      internal-net:
-        ipv4_address: 172.16.1.11
+      - internal-net
     dns:
       - 8.8.8.8
       - 8.8.4.4
     volumes:
       # Bind mounts
-      - ./credentials:/run/credentials
       - ./shell/ubuntu/.bashrc.d:/home/ubuntu/.bashrc.d
       - ./shell/ubuntu/.config:/home/ubuntu/.config
       - ./shell/ubuntu/files:/home/ubuntu/.host-data
@@ -87,8 +81,11 @@ services:
       # Named volumes
       - fpm-sockets-dir:/run/php
       - mariadb-sockets-dir:/run/mysqld
+      - postgres-sockets-dir:/var/run/postgresql
 
   mariadb:
+    profiles:
+      - mariadb
     image: martinschumann/docker-lamp-php-switch-mariadb:latest
     build:
       context: .
@@ -101,11 +98,33 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     networks:
-      internal-net:
-        ipv4_address: 172.16.1.12
+      - internal-net
     volumes:
       # Bind mounts
       - ./credentials:/run/credentials
       # Named volumes
       - mariadb-data-dir:/var/lib/mysql
       - mariadb-sockets-dir:/run/mysqld
+
+  postgres:
+    profiles:
+      - postgres
+    image: martinschumann/docker-lamp-php-switch-postgres:latest
+    build:
+      context: .
+      dockerfile: ./postgres/Dockerfile
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/credentials/postgres_root_pwd
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - internal-net
+    volumes:
+      # Bind mounts
+      - ./credentials:/run/credentials
+      # Named volumes
+      - postgres-data-dir:/var/lib/postgresql
+      - postgres-sockets-dir:/var/run/postgresql
+

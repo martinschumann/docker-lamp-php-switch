@@ -5,6 +5,7 @@ source /docker/lib/utils.sh
 
 scripts=(
     "/docker/entrypoint.d/forward-mariadb.sh"
+    "/docker/entrypoint.d/forward-postgreql.sh"
     "/docker/entrypoint.d/provision-user-environment.sh"
 )
 

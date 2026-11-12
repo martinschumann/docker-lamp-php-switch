@@ -1,1 +1,1 @@
-alias mariadb-root='sudo su root -c "mariadb --protocol=socket --socket=/run/mysqld/mysqld.sock -u root"'
+alias mariadb-root='sudo mariadb --protocol=socket --socket=/run/mysqld/mysqld.sock -u root'
