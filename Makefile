@@ -42,7 +42,7 @@ help: ## Display this help
 
 build: ## Build the container stack
 	$(BASH_LIB) echo_info "Start building lamp-php-switch";
-	docker compose build pki apache
+	docker compose build pki apache mariadb postgres
 
 	$(BASH_LIB) for VERSION in $(PHP_VERSIONS); do \
 		echo_info "Image for PHP $$VERSION | Building"; \
