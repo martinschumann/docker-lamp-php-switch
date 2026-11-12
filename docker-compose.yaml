@@ -4,9 +4,6 @@ networks:
   internal-net:
     name: internal-net
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.16.1.0/24
 
 volumes:
   mariadb-data-dir:
@@ -38,8 +35,7 @@ services:
     container_name: apache
     hostname: apache
     networks:
-      internal-net:
-        ipv4_address: 172.16.1.10
+      - internal-net
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -70,8 +66,7 @@ services:
     container_name: php-fpm-${PHP_VERSION:-8.4}
     hostname: php-fpm-${PHP_VERSION:-8.4}
     networks:
-      internal-net:
-        ipv4_address: 172.16.1.11
+      - internal-net
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -103,8 +98,7 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     networks:
-      internal-net:
-        ipv4_address: 172.16.1.12
+      - internal-net
     volumes:
       # Bind mounts
       - ./credentials:/run/credentials
@@ -126,8 +120,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     networks:
-      internal-net:
-        ipv4_address: 172.16.1.13
+      - internal-net
     volumes:
       # Bind mounts
       - ./credentials:/run/credentials
