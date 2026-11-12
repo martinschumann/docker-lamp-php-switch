@@ -19,6 +19,11 @@ ifneq ($(wildcard .env),)
     include .env
 endif
 
+# Translate DB usage flags into profile arguments
+DB_PROFILES := \
+    $(if $(filter 1,$(USE_MARIADB)),--profile mariadb) \
+    $(if $(filter 1,$(USE_POSTGRES)),--profile pgsql)
+
 ROOT_CA_CERT = ./pki/ca/root-ca.lamp-php-switch.crt
 CA_WAIT_TIMEOUT ?= 30
 CACHE_BUST := $(shell date +%s)
@@ -54,11 +59,11 @@ up: ## Start the container stack
 		echo_info "Starting lamp-php-switch with PHP $(PHP_VERSION)"; \
 	fi
 
-	docker compose up -d --remove-orphans
+	docker compose $(DB_PROFILES) up -d --remove-orphans
 
 down: ## Stop the container stack
 	$(BASH_LIB) echo_info "Stopping lamp-php-switch with PHP $(PHP_VERSION)";
-	docker compose down
+	docker compose $(DB_PROFILES) down
 
 logs: ## Tail logs
 	docker compose logs -f

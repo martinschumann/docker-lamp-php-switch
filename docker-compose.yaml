@@ -89,6 +89,8 @@ services:
       - postgres-sockets-dir:/var/run/postgresql
 
   mariadb:
+    profiles:
+      - mariadb
     image: martinschumann/docker-lamp-php-switch-mariadb:latest
     build:
       context: .
@@ -111,12 +113,16 @@ services:
       - mariadb-sockets-dir:/run/mysqld
 
   postgres:
+    profiles:
+      - postgres
     image: martinschumann/docker-lamp-php-switch-postgres:latest
     build:
       context: .
       dockerfile: ./postgres/Dockerfile
     environment:
       POSTGRES_PASSWORD_FILE: /run/credentials/postgres_root_pwd
+    container_name: postgres
+    hostname: postgres
     ports:
       - "127.0.0.1:5432:5432"
     networks:
