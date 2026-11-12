@@ -63,7 +63,7 @@ up: ## Start the container stack
 
 down: ## Stop the container stack
 	$(BASH_LIB) echo_info "Stopping lamp-php-switch with PHP $(PHP_VERSION)";
-	docker compose $(DB_PROFILES) down
+	docker compose --profile '*' down
 
 logs: ## Tail logs
 	docker compose logs -f
