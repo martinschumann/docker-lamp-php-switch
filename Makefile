@@ -20,6 +20,7 @@ ifneq ($(wildcard .env),)
 endif
 
 ROOT_CA_CERT = ./pki/ca/root-ca.lamp-php-switch.crt
+CA_WAIT_TIMEOUT ?= 30
 CACHE_BUST := $(shell date +%s)
 
 define BASH_LIB
@@ -102,7 +103,6 @@ update-composer: ## Update Composer in PHP-FPM images
 	done
 
 	$(MAKE) up
-
 
 generate-ca-cert: ## Restart the container and generate a Root-CA certificate at boot time
 	$(BASH_LIB) echo_info "Generate a Root-CA certificate";
