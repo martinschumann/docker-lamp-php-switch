@@ -12,6 +12,7 @@ volumes:
   mariadb-data-dir:
   mariadb-sockets-dir:
   postgres-data-dir:
+  postgres-sockets-dir:
   fpm-sockets-dir:
 
 services:
@@ -85,6 +86,7 @@ services:
       # Named volumes
       - fpm-sockets-dir:/run/php
       - mariadb-sockets-dir:/run/mysqld
+      - postgres-sockets-dir:/var/run/postgresql
 
   mariadb:
     image: martinschumann/docker-lamp-php-switch-mariadb:latest
@@ -125,3 +127,5 @@ services:
       - ./credentials:/run/credentials
       # Named volumes
       - postgres-data-dir:/var/lib/postgresql
+      - postgres-sockets-dir:/var/run/postgresql
+
