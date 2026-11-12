@@ -57,8 +57,6 @@ services:
       dockerfile: ./php-fpm/Dockerfile
       args:
         PHP_VERSION: ${PHP_VERSION:-8.4}
-        HOST_UID: ${HOST_UID:-1000}
-        HOST_GID: ${HOST_GID:-1000}
     environment:
       PHP_VERSION: ${PHP_VERSION:-8.4}
       HOST_UID: ${HOST_UID:-1000}

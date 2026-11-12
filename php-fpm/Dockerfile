@@ -7,12 +7,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG PHP_VERSION
-ARG HOST_UID
-ARG HOST_GID
 
 ENV PHP_VERSION=${PHP_VERSION}
-ENV HOST_UID=${HOST_UID}
-ENV HOST_GID=${HOST_GID}
 
 # Install packages
 COPY ./php-fpm/packages.d /root/packages.d
@@ -37,7 +33,6 @@ RUN set -euo pipefail && \
     update-alternatives --set phar /usr/bin/phar${PHP_VERSION}
 
 RUN mkdir -p /srv/php-fpm/log && \
-    chown -R $HOST_UID:$HOST_GID /srv/php-fpm && \
     sed -i "s|error_log = /var/log/php${PHP_VERSION}-fpm.log|error_log = /srv/php-fpm/log/php${PHP_VERSION}-fpm.log|g" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf
 
 RUN ln -sf /dev/stderr /srv/php-fpm/log/php${PHP_VERSION}-fpm.log
