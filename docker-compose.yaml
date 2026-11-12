@@ -9,9 +9,9 @@ networks:
         - subnet: 172.16.1.0/24
 
 volumes:
-  mysql-data:
-  postgres-data:
+  mariadb-data-dir:
   mariadb-sockets-dir:
+  postgres-data-dir:
   fpm-sockets-dir:
 
 services:
@@ -43,8 +43,8 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
     volumes:
       # Bind Mounts
       - ./pki/ca:/docker/ca
@@ -62,9 +62,11 @@ services:
         PHP_VERSION: ${PHP_VERSION:-8.4}
         HOST_UID: ${HOST_UID:-1000}
         HOST_GID: ${HOST_GID:-1000}
-    depends_on:
-      mariadb:
-        condition: service_started
+    environment:
+      PHP_VERSION: ${PHP_VERSION:-8.4}
+      HOST_UID: ${HOST_UID:-1000}
+      HOST_GID: ${HOST_GID:-1000}
+      MARIADB_ROOT_PASSWORD_FILE: /run/credentials/mariadb_root_pwd
     container_name: php-fpm-${PHP_VERSION:-8.4}
     hostname: php-fpm-${PHP_VERSION:-8.4}
     networks:
@@ -75,7 +77,9 @@ services:
       - 8.8.4.4
     volumes:
       # Bind mounts
+      - ./credentials:/run/credentials
       - ./shell/ubuntu/.bashrc.d:/home/ubuntu/.bashrc.d
+      - ./shell/ubuntu/.config:/home/ubuntu/.config
       - ./shell/ubuntu/files:/home/ubuntu/.host-data
       - ./shell/ubuntu/.mysql:/home/ubuntu/.mysql
       - ./shell/ubuntu/.ssh:/home/ubuntu/.ssh
@@ -85,19 +89,23 @@ services:
       - mariadb-sockets-dir:/run/mysqld
 
   mariadb:
+    image: martinschumann/docker-lamp-php-switch-mariadb:latest
+    build:
+      context: .
+      dockerfile: ./mariadb/Dockerfile
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/credentials/mariadb_root_pwd
     container_name: mariadb
     hostname: mariadb
-    image: mariadb:lts
     command: ["--ssl=0"]
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     networks:
       internal-net:
         ipv4_address: 172.16.1.12
-    environment:
-      - MYSQL_ROOT_PASSWORD
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
     volumes:
+      # Bind mounts
+      - ./credentials:/run/credentials
       # Named volumes
-      - mysql-data:/var/lib/mysql
+      - mariadb-data-dir:/var/lib/mysql
       - mariadb-sockets-dir:/run/mysqld

@@ -20,6 +20,7 @@ ifneq ($(wildcard .env),)
 endif
 
 ROOT_CA_CERT = ./pki/ca/root-ca.lamp-php-switch.crt
+CACHE_BUST := $(shell date +%s)
 
 define BASH_LIB
 echo_info()    { echo -e "\033[1;34m[INFO]\033[0m    $$*"; }; \
@@ -42,17 +43,17 @@ build: ## Build the container stack
 	$(BASH_LIB) echo_info "Start building lamp-php-switch";
 	docker compose build pki apache
 
-	for VERSION in $(PHP_VERSIONS); do \
-		$(BASH_LIB) echo_info "Building image for PHP version $$VERSION"; \
+	$(BASH_LIB) for VERSION in $(PHP_VERSIONS); do \
+		echo_info "Image for PHP $$VERSION | Building"; \
 		PHP_VERSION=$$VERSION docker compose build php-fpm --no-cache; \
 	done
 
 up: ## Start the container stack
-	if [ "$(CHAINED)" != "1" ]; then \
-		$(BASH_LIB) echo_info "Starting lamp-php-switch with PHP $(PHP_VERSION)"; \
+	$(BASH_LIB) if [ "$(CHAINED)" != "1" ]; then \
+		echo_info "Starting lamp-php-switch with PHP $(PHP_VERSION)"; \
 	fi
 
-	docker compose up -d --no-build --remove-orphans
+	docker compose up -d --remove-orphans
 
 down: ## Stop the container stack
 	$(BASH_LIB) echo_info "Stopping lamp-php-switch with PHP $(PHP_VERSION)";
@@ -61,18 +62,63 @@ down: ## Stop the container stack
 logs: ## Tail logs
 	docker compose logs -f
 
+update-composer: ## Update Composer in PHP-FPM images
+	$(BASH_LIB) echo_info "Updating Composer in lamp-php-switch"; \
+	for VERSION in $(PHP_VERSIONS); do \
+		image="martinschumann/docker-lamp-php-switch-php-fpm:$$VERSION"; \
+		if ! docker image inspect "$$image" >/dev/null; then \
+			echo_error "Cannot inspect local image: $$image"; \
+			exit 1; \
+		fi; \
+	done
+
+	docker compose down
+
+	$(BASH_LIB) for VERSION in $(PHP_VERSIONS); do \
+		image="martinschumann/docker-lamp-php-switch-php-fpm:$$VERSION"; \
+		current=$$(docker run --rm --pull=never --entrypoint composer \
+			"$$image" --no-ansi --version 2>/dev/null \
+			| grep -Eo '^Composer version [^[:space:]]+') || current="not available"; \
+		current="$${current#Composer version }"; \
+		echo_info "Image for PHP $$VERSION | Composer installed at version: $$current"; \
+		echo_info "Image for PHP $$VERSION | Building"; \
+		PHP_VERSION="$$VERSION" docker compose build \
+			--build-arg "COMPOSER_CACHE_BUST=$(CACHE_BUST)" php-fpm; \
+		update=$$(docker run --rm --pull=never --entrypoint composer \
+			"$$image" --no-ansi --version \
+			| grep -Eo '^Composer version [^[:space:]]+') || { \
+			echo_error "Image for PHP $$VERSION | Cannot determine Composer version after build"; \
+			exit 1; \
+		}; \
+		update="$${update#Composer version }"; \
+		if [[ "$$current" == "not available" ]]; then \
+			echo_info "Image for PHP $$VERSION | Composer after build: $$update"; \
+		elif [[ "$$current" == "$$update" ]]; then \
+			echo_info "Image for PHP $$VERSION | Composer stayed at: $$update"; \
+		else \
+			echo_success "Image for PHP $$VERSION | Composer changed: $$current -> $$update"; \
+		fi; \
+		echo; \
+	done
+
+	$(MAKE) up
+
 generate-ca-cert: ## Restart the container and generate a Root-CA certificate at boot time
 	$(BASH_LIB) echo_info "Generate a Root-CA certificate";
 	docker compose down && \
 	RENEW_SSL_CA=1 docker compose up -d
+
+backup-mariadb: ## Not implemented
+	$(BASH_LIB) echo_error "Next target to be added."; \
+	exit 1
 
 cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 	$(BASH_LIB) echo_info "Restarting the container stack"
 	docker compose down
 	$(MAKE) up CHAINED=1
 
-	if [ ! -f "$(ROOT_CA_CERT)" ]; then \
-		$(BASH_LIB) echo_error "Root CA certificate not found: $(ROOT_CA_CERT)"; \
+	$(BASH_LIB) if [ ! -f "$(ROOT_CA_CERT)" ]; then \
+		echo_error "Root CA certificate not found: $(ROOT_CA_CERT)"; \
 		exit 1; \
 	fi
 
@@ -84,18 +130,18 @@ cert-import-linux: ## Import the Root CA certificate into the Linux system trust
 	docker compose down
 	$(MAKE) up CHAINED=1
 
-	if [ ! -f "$(ROOT_CA_CERT)" ]; then \
-		$(BASH_LIB) echo_error "Root CA certificate not found: $(ROOT_CA_CERT)"; \
+	$(BASH_LIB) if [ ! -f "$(ROOT_CA_CERT)" ]; then \
+		echo_error "Root CA certificate not found: $(ROOT_CA_CERT)"; \
 		exit 1; \
 	fi
 
-	if [ ! -f /etc/os-release ]; then \
-		$(BASH_LIB) echo_error "No os-release standard file found."; \
+	$(BASH_LIB) if [ ! -f /etc/os-release ]; then \
+		echo_error "No os-release standard file found."; \
 		exit 1; \
 	fi
 
-	if grep -qiE "ubuntu|debian|suse" /etc/os-release; then \
-		$(BASH_LIB) echo_info "Debian/Ubuntu/SuSE ecosystem detected."; \
+	$(BASH_LIB) if grep -qiE "ubuntu|debian|suse" /etc/os-release; then \
+		echo_info "Debian/Ubuntu/SuSE ecosystem detected."; \
 		# \
 		if [ -d /etc/pki/trust/anchors ]; then \
 			sudo cp "$(ROOT_CA_CERT)" /etc/pki/trust/anchors/; \
@@ -105,11 +151,11 @@ cert-import-linux: ## Import the Root CA certificate into the Linux system trust
 		# \
 		sudo update-ca-certificates; \
 	elif grep -qiE "rhel|centos|fedora|rocky|alma" /etc/os-release; then \
-		$(BASH_LIB) echo_info "RedHat/Fedora ecosystem detected."; \
+		echo_info "RedHat/Fedora ecosystem detected."; \
 		sudo cp "$(ROOT_CA_CERT)" /etc/pki/ca-trust/source/anchors/; \
 		sudo update-ca-trust; \
 	else \
-		$(BASH_LIB) echo_error "Unsupported Linux distribution."; \
+		echo_error "Unsupported Linux distribution."; \
 		exit 1; \
 	fi
 

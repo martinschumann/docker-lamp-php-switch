@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source /docker/lib/utils.sh
+
 log "Running $(hostname):$(realpath ${BASH_SOURCE[0]})"
 
 if [[ -f "/opt/pki/private/server.lamp-php-switch.key" ]] \

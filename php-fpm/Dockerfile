@@ -53,7 +53,15 @@ RUN chown ubuntu:ubuntu /home/ubuntu/.bashrc && \
     chown ubuntu:ubuntu /home/ubuntu/.sudo_as_admin_successful
 COPY --chmod=600 ./shell/sudoers.d/ubuntu /etc/sudoers.d/ubuntu
 
+# Utility lib
 COPY --chmod=755 ./lib/utils.sh /docker/lib/utils.sh
+
+# Install Composer
+COPY --chmod=755 ./php-fpm/scripts/install-composer.sh /docker/bin/install-composer.sh
+ARG COMPOSER_CACHE_BUST=0
+RUN /docker/bin/install-composer.sh
+
+# Entrypoint scripts
 COPY --chmod=755 ./php-fpm/entrypoint.sh /docker/entrypoint.sh
 COPY --chmod=755 ./php-fpm/entrypoint.d/ /docker/entrypoint.d/
 
