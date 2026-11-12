@@ -107,3 +107,19 @@ services:
       # Named volumes
       - mariadb-data-dir:/var/lib/mysql
       - mariadb-sockets-dir:/run/mysqld
+
+  postgres:
+    image: martinschumann/docker-lamp-php-switch-postgres:latest
+    build:
+      context: .
+      dockerfile: ./postgres/Dockerfile
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/credentials/postgres_root_pwd
+    networks:
+      internal-net:
+        ipv4_address: 172.16.1.13
+    volumes:
+      # Bind mounts
+      - ./credentials:/run/credentials
+      # Named volumes
+      - postgres-data-dir:/var/lib/postgresql
