@@ -49,11 +49,11 @@
     fi
 
 
-    for path in "$ubuntu_home" \
-                "$ubuntu_home/.bashrc" \
-                "$ubuntu_home/.bash_logout" \
-                "$ubuntu_home/.profile" \
-                "$ubuntu_home/.sudo_as_admin_successful"; do
+    for path in "$home_dir" \
+                "$home_dir/.bashrc" \
+                "$home_dir/.bash_logout" \
+                "$home_dir/.profile" \
+                "$home_dir/.sudo_as_admin_successful"; do
         if [[ -e "$path" && ! -L "$path" ]] && ! mountpoint -q -- "$path"; then
             chown --no-dereference "$target_uid:$target_gid" "$path"
         fi
