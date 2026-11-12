@@ -26,12 +26,12 @@ RUN set -euo pipefail && \
 
 # Add repository ppa:ondrej/php
 RUN rm -rf /root/php-packages
-COPY ./php-fpm/php-${PHP_VERSION}/php-packages /root/php-packages
+COPY ./php-fpm/php-${PHP_VERSION}/php.pkgs /root/php-${PHP_VERSION}.pkgs
 RUN set -euo pipefail && \
     apt-get update && \
     apt-get install software-properties-common -y --no-install-recommends --no-install-suggests && \
     add-apt-repository ppa:ondrej/php  && \
-    xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < /root/php-packages  && \
+    xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < /root/php-${PHP_VERSION}.pkgs  && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     update-alternatives --set php /usr/bin/php${PHP_VERSION} && \
     update-alternatives --set phar /usr/bin/phar${PHP_VERSION}

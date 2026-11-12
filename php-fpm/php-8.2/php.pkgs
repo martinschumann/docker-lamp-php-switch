@@ -14,6 +14,7 @@ php8.2-mongodb
 php8.2-mysql
 php8.2-oauth
 php8.2-odbc
+php8.2-pgsql
 php8.2-smbclient
 php8.2-soap
 php8.2-solr
