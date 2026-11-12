@@ -103,45 +103,52 @@ update-composer: ## Update Composer in PHP-FPM images
 
 	$(MAKE) up
 
+
 generate-ca-cert: ## Restart the container and generate a Root-CA certificate at boot time
 	$(BASH_LIB) echo_info "Generate a Root-CA certificate";
 	docker compose down && \
 	RENEW_SSL_CA=1 docker compose up -d
 
 backup-mariadb: ## Not implemented
-	$(BASH_LIB) echo_error "Next target to be added."; \
+	$(BASH_LIB) echo_error "Next target to be added"; \
 	exit 1
+
+wait-for-root-ca:
+	$(BASH_LIB) cert="$(ROOT_CA_CERT)"; \
+	deadline=$$((SECONDS + $(CA_WAIT_TIMEOUT))); \
+	until [[ -f "$$cert" && -r "$$cert" && -s "$$cert" ]] \
+		&& details=$$(openssl x509 -in "$$cert" -noout -text 2>/dev/null) \
+		&& [[ "$$details" == *"CA:TRUE"* ]] \
+		&& openssl verify -check_ss_sig -CAfile "$$cert" "$$cert" >/dev/null 2>&1; do \
+		if (( SECONDS >= deadline )); then \
+			echo_error "No readable, valid Root CA after $(CA_WAIT_TIMEOUT)s: $$cert" >&2; \
+			exit 1; \
+		fi; \
+		sleep 1; \
+	done
 
 cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 	$(BASH_LIB) echo_info "Restarting the container stack"
 	docker compose down
 	$(MAKE) up CHAINED=1
+	$(MAKE) wait-for-root-ca
 
-	$(BASH_LIB) if [ ! -f "$(ROOT_CA_CERT)" ]; then \
-		echo_error "Root CA certificate not found: $(ROOT_CA_CERT)"; \
-		exit 1; \
-	fi
-
-	$(BASH_LIB) echo_info "Calling system keychain."
+	$(BASH_LIB) echo_info "Importing the Root CA into the macOS system keychain"
 	sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$(ROOT_CA_CERT)"
 
 cert-import-linux: ## Import the Root CA certificate into the Linux system trust store
 	$(BASH_LIB) echo_info "Restarting the container stack"
 	docker compose down
 	$(MAKE) up CHAINED=1
-
-	$(BASH_LIB) if [ ! -f "$(ROOT_CA_CERT)" ]; then \
-		echo_error "Root CA certificate not found: $(ROOT_CA_CERT)"; \
-		exit 1; \
-	fi
+	$(MAKE) wait-for-root-ca
 
 	$(BASH_LIB) if [ ! -f /etc/os-release ]; then \
-		echo_error "No os-release standard file found."; \
+		echo_error "No os-release standard file found"; \
 		exit 1; \
 	fi
 
 	$(BASH_LIB) if grep -qiE "ubuntu|debian|suse" /etc/os-release; then \
-		echo_info "Debian/Ubuntu/SuSE ecosystem detected."; \
+		echo_info "Debian/Ubuntu/SuSE ecosystem detected"; \
 		# \
 		if [ -d /etc/pki/trust/anchors ]; then \
 			sudo cp "$(ROOT_CA_CERT)" /etc/pki/trust/anchors/; \
@@ -151,14 +158,14 @@ cert-import-linux: ## Import the Root CA certificate into the Linux system trust
 		# \
 		sudo update-ca-certificates; \
 	elif grep -qiE "rhel|centos|fedora|rocky|alma" /etc/os-release; then \
-		echo_info "RedHat/Fedora ecosystem detected."; \
+		echo_info "RedHat/Fedora ecosystem detected"; \
 		sudo cp "$(ROOT_CA_CERT)" /etc/pki/ca-trust/source/anchors/; \
 		sudo update-ca-trust; \
 	else \
-		echo_error "Unsupported Linux distribution."; \
+		echo_error "Unsupported Linux distribution"; \
 		exit 1; \
 	fi
 
 cert-import-windows: ## Not implemented
-	$(BASH_LIB) echo_error "Not implemented."; \
+	$(BASH_LIB) echo_error "Not implemented"; \
 	exit 1
