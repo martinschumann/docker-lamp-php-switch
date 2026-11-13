@@ -43,7 +43,7 @@ jobs:
         with:
           source: .
           files: docker-compose.yaml
-          targets: apache,mariadb,php-fpm
+          targets: ${{ matrix.php == '8.4' && 'apache,mariadb,postgres,php-fpm' || 'apache,php-fpm' }}
           load: true
           set: |
             apache.args.PHP_VERSION=8.4
@@ -51,16 +51,23 @@ jobs:
             apache.cache-to=type=gha,scope=lamp-apache,mode=max
             mariadb.cache-from=type=gha,scope=lamp-mariadb
             mariadb.cache-to=type=gha,scope=lamp-mariadb,mode=max
+            postgres.cache-from=type=gha,scope=lamp-postgres
+            postgres.cache-to=type=gha,scope=lamp-postgres,mode=max
 
       - name: Configure local DNS routing
         run: |
           echo '127.0.0.1 examplehost.lamp.localhost' | sudo tee -a /etc/hosts
 
-      - name: Start stack from built images
-        run: docker compose up -d --no-build --pull never apache mariadb php-fpm
+      - name: Start stack with both database profiles
+        if: ${{ matrix.php == '8.4' }}
+        run: make up USE_MARIADB=1 USE_POSTGRES=1
+
+      - name: Start web stack from built images
+        if: ${{ matrix.php != '8.4' }}
+        run: docker compose up -d --no-build --pull never apache php-fpm
 
       - name: Test Apache default page over HTTP
-        if: ${{ matrix.php == '8.2' }}
+        if: ${{ matrix.php == '8.4' }}
         run: |
           curl --fail --silent --show-error \
             --retry 10 --retry-all-errors --retry-delay 1 --max-time 5 \
@@ -80,7 +87,7 @@ jobs:
           echo "$output"
           version=$(sed -En '1s/^PHP ([0-9]+[.][0-9]+)[.].*/\1/p' <<< "$output")
 
-          if [[ "$version" != "${PHP_VERSION}" ]]; then
+          if [[ "$version" != "$PHP_VERSION" ]]; then
             echo "Expected PHP CLI version $PHP_VERSION but found ${version:-unknown}" >&2
             exit 1
           fi
@@ -96,6 +103,10 @@ jobs:
             exit 1
           fi
 
-      - name: Shutdown LAMP Stack
+      - name: Verify database authentication over TCP and Unix sockets
+        if: ${{ matrix.php == '8.4' }}
+        run: bash .github/scripts/test-databases.sh
+
+      - name: Shutdown LAMP stack
         if: always()
         run: make down
