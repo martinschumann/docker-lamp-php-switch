@@ -78,7 +78,7 @@ update-composer: ## Update Composer in PHP-FPM images
 		fi; \
 	done
 
-	docker compose down
+	$(MAKE) down
 
 	$(BASH_LIB) for VERSION in $(PHP_VERSIONS); do \
 		image="martinschumann/docker-lamp-php-switch-php-fpm:$$VERSION"; \
@@ -111,7 +111,7 @@ update-composer: ## Update Composer in PHP-FPM images
 
 generate-ca-cert: ## Restart the container and generate a Root-CA certificate at boot time
 	$(BASH_LIB) echo_info "Generate a Root-CA certificate";
-	docker compose down && \
+	$(MAKE) down && \
 	RENEW_SSL_CA=1 docker compose up -d
 
 backup-mariadb: ## Not implemented
@@ -134,7 +134,7 @@ wait-for-root-ca:
 
 cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 	$(BASH_LIB) echo_info "Restarting the container stack"
-	docker compose down
+	$(MAKE) down
 	$(MAKE) up CHAINED=1
 	$(MAKE) wait-for-root-ca
 
@@ -143,7 +143,7 @@ cert-import-macos: ## Import the Root CA certificate into macOS Keychain Access
 
 cert-import-linux: ## Import the Root CA certificate into the Linux system trust store
 	$(BASH_LIB) echo_info "Restarting the container stack"
-	docker compose down
+	$(MAKE) down
 	$(MAKE) up CHAINED=1
 	$(MAKE) wait-for-root-ca
 
