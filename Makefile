@@ -51,7 +51,7 @@ build: ## Build the container stack
 
 	$(BASH_LIB) for VERSION in $(PHP_VERSIONS); do \
 		echo_info "Image for PHP $$VERSION | Building"; \
-		PHP_VERSION=$$VERSION docker compose build php-fpm --no-cache; \
+		PHP_VERSION=$$VERSION docker compose build php-fpm; \
 	done
 
 up: ## Start the container stack
