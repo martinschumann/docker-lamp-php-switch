@@ -22,7 +22,7 @@ endif
 # Translate DB usage flags into profile arguments
 DB_PROFILES := \
     $(if $(filter 1,$(USE_MARIADB)),--profile mariadb) \
-    $(if $(filter 1,$(USE_POSTGRES)),--profile pgsql)
+    $(if $(filter 1,$(USE_POSTGRES)),--profile postgres)
 
 ROOT_CA_CERT = ./pki/ca/root-ca.lamp-php-switch.crt
 CA_WAIT_TIMEOUT ?= 30
