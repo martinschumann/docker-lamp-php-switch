@@ -3,7 +3,7 @@ set -euo pipefail
 
 source ./lib/utils.sh
 
-cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.."
+cd "$(dirname -- "${BASH_SOURCE[0]}")/../.."
 
 wait_for_tcp() {
     local service="$1"
@@ -12,8 +12,8 @@ wait_for_tcp() {
     local result attempt
 
     for ((attempt = 1; attempt <= 20; attempt++)); do
-        if test -s "$password_file" &&
-           result=$(cat -- "$password_file" |
+        if sudo -n test -s "$password_file" &&
+           result=$(sudo -n cat "$password_file" |
                docker compose exec -T --user ubuntu php-fpm sh -eu -c "$query") &&
            [[ "$result" == 1 ]]; then
             log "$service: TCP password authentication OK"
