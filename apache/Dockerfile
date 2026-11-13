@@ -28,9 +28,9 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install packages
-COPY ./apache/packages /root/packages
+COPY ./apache/default.pkgs /root/default.pkgs
 RUN apt-get update && \
-    xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < /root/packages && \
+    xargs -P1 apt-get install -y --no-install-recommends --no-install-suggests < /root/default.pkgs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Apache configuration
