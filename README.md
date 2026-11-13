@@ -15,19 +15,15 @@ git clone https://github.com/martinschumann/docker-lamp-php-switch
 ```
 
 ```sh
-git clone https://github.com/martinschumann/docker-lamp-php-switch
-```
-
-```sh
 cd docker-lamp-php-switch
 ```
 
 ```sh
-cp .env-example .env
+cp .env.example .env
 ```
 
 ```sh
-make build && make up
+docker compose up -d --build
 ```
 
 Root-Certificate has to be imported. Use one of these:
