@@ -12,4 +12,5 @@ ssh
 sudo
 unzip
 vim
+wget
 zip

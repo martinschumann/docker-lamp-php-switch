@@ -1,12 +1,7 @@
 ca-certificates
-curl
 dnsutils
-dos2unix
-git
 htop
-mariadb-client
 openssl
 ssh
 sudo
 vim
-wget
