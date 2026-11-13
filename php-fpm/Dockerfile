@@ -32,7 +32,7 @@ RUN set -euo pipefail && \
     apt-get install -y --no-install-recommends ca-certificates curl && \
     install -d -m 0755 /etc/apt/keyrings && \
     curl -fsSL --retry 3 \
-        'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x14AA40EC0831756778BD28D3FEF00D0089FE6F5C' \
+        'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xB8DC7E53946656EFBCE4C1DD71DAEAAB4AD4CAB6' \
         -o /etc/apt/keyrings/ondrej-php.asc && \
     chmod 0644 /etc/apt/keyrings/ondrej-php.asc && \
     printf '%s\n' \
@@ -40,7 +40,7 @@ RUN set -euo pipefail && \
         'URIs: https://ppa.launchpadcontent.net/ondrej/php/ubuntu' \
         'Suites: noble' \
         'Components: main' \
-        'Signed-By: /etc/apt/keyrings/ondrej-php.asc 14AA40EC0831756778BD28D3FEF00D0089FE6F5C' \
+        'Signed-By: /etc/apt/keyrings/ondrej-php.asc B8DC7E53946656EFBCE4C1DD71DAEAAB4AD4CAB6' \
         > /etc/apt/sources.list.d/ondrej-php.sources && \
     rm -rf /var/lib/apt/lists/*
 
