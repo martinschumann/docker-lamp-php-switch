@@ -34,10 +34,11 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Apache configuration
-COPY ./apache/config/000-default-ssl.conf /etc/apache2/sites-available/000-default-ssl.conf
-RUN echo "ServerName $SERVERNAME" > /etc/apache2/conf-available/servername.conf && \
-    echo -e "ErrorLog /dev/stderr\nCustomLog /dev/stdout combined" > /etc/apache2/conf-available/redirected-logs.conf && \
-    echo "IncludeOptional php-fpm-sites/*.conf" > /etc/apache2/sites-available/php-fpm-sites.conf
+COPY ./apache/conf-available/php-fpm-https.conf /etc/apache2/conf-available/php-fpm-https.conf
+COPY ./apache/conf-available/redirected-logs.conf /etc/apache2/conf-available/redirected-logs.conf
+COPY ./apache/conf-available/servername.conf /etc/apache2/conf-available/servername.conf
+COPY ./apache/sites-available/000-default-ssl.conf /etc/apache2/sites-available/000-default-ssl.conf
+COPY ./apache/sites-available/php-fpm-sites.conf /etc/apache2/sites-available/php-fpm-sites.conf
 
 RUN a2enmod proxy \
             proxy_fcgi \
@@ -45,8 +46,9 @@ RUN a2enmod proxy \
             setenvif \
             ssl
 
-RUN a2enconf servername  && \
+RUN a2enconf php-fpm-https && \
     a2enconf redirected-logs && \
+    a2enconf servername  && \
     a2ensite php-fpm-sites && \
     a2disconf other-vhosts-access-log
 
